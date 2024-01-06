@@ -1,8 +1,12 @@
+% GENERATE_INPUTS
+
 %{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% VERSION- v 1.0.0
+%% VERSION- v 1.0.1
     Last edit: 4 January 2024
     Edit made: 
+        - Changed rounding of tabular values in sumvars to accomodate more
+        decimal places
     Ryan Schanta
 %}
 
@@ -51,8 +55,6 @@ parameters constant between each 'input.txt' file are output to
     lines
     
 %}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function Definition
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -248,7 +250,7 @@ end
 function vtab = setparam_vars(param,value,vtab,fid)
     value_str = num2str(value,'%.4f');
     fprintf(fid,[param, ' = ',value_str,'\n']);
-    vtab.(param) = round(value,2); 
+    vtab.(param) = value; 
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
