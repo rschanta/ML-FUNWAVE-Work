@@ -5,7 +5,8 @@ Topo-Bathy Cross-Shore Profiles and Characteristics for U.S. Atlantic and
 Gulf of Mexico Sandy Coastlines". It (i) reads in the full profile, cuts it 
 off at the zero-crossing to generate the profile underwater (ii), and then
 interpolates these profiles to a grid of 1024 (iii). These 3 profiles are
-then stored to a 
+then stored to a stucture with the variables 'Xshore' and 'Elevation', with
+the affixes 'raw', 'cut', and 'int' correspondingly.
 %}
 
 %%
@@ -14,11 +15,14 @@ clc
 close all
 Xshore_raw = {}; Xshore_cut = {}; Xshore_int = []; 
 Elevation_raw = {}; Elevation_cut = {}; Elevation_int = []; 
+latlong = [];
 for j = 1:3786
     try
         % Read in data
         Xshore_raw_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Xshore']);
         Elevation_raw_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Elevation']);
+        lat_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Elevation']);
+        long_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Elevation']);
         
         Xshore_raw{end+1} = Xshore_raw_i;
         Elevation_raw{end+1} = Elevation_raw_i;

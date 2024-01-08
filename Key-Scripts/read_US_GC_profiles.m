@@ -15,15 +15,21 @@ clc
 close all
 Xshore_raw = {}; Xshore_cut = {}; Xshore_int = []; 
 Elevation_raw = {}; Elevation_cut = {}; Elevation_int = []; 
+latlong = [];
 for j = 1:3786
     try
         % Read in data
         Xshore_raw_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Xshore']);
         Elevation_raw_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Elevation']);
-        
+        lat_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/lat']);
+        long_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/lon']);
+
+        % Store raw profiles
         Xshore_raw{end+1} = Xshore_raw_i;
         Elevation_raw{end+1} = Elevation_raw_i;
 
+        % Store latitude and longitude
+        latlong = [latlong; lat_i, long_i];
 
         % Find zero crossings and index out
         zero_cross = (Elevation_raw_i(1:end-1) .* Elevation_raw_i(2:end)) <= 0;
@@ -41,7 +47,7 @@ for j = 1:3786
         Xshore_int_i = linspace(Xshore_cut_i(1), Xshore_cut_i(end), len_int);
         Xshore_int = [Xshore_int; Xshore_int_i];
 
-        Elevation_int_i = interp1(Xshore_cut_i, Elevation_cut_i, Xshore_int_i, 'spline');
+        Elevation_int_i = interp1(Xshore_cut_i, Elevation_cut_i, Xshore_int_i, "linear");
         Elevation_int = [Elevation_int; Elevation_int_i];
 
         
@@ -63,20 +69,23 @@ Elevation_raw = Elevation_raw(sortedIndices);
 Xshore_cut = Xshore_cut(sortedIndices);
 Elevation_cut = Elevation_cut(sortedIndices);
 
-% Reorcer the matrices based on sorted indices
-Xshore_int = Xshore_int(sortedIndices, :);
-Elevation_int_ = Elevation_int(sortedIndices, :);
+% Reorder the matrices based on sorted indices
+latlong_s = latlong(sortedIndices,:);
+Xshore_int_s = Xshore_int(sortedIndices, :);
+Elevation_int_s = Elevation_int(sortedIndices, :);
 
 %% Package into structure for output to save
     % Raw Profiles
         US_GC_Processed.Xshore_raw = Xshore_raw;
         US_GC_Processed.Elevation_raw = Elevation_raw;
+    % Latitude and Longitude
+        US_GC_Processed.latlong = latlong_s;
     % Cutoff Profiles
         US_GC_Processed.Xshore_cut = Xshore_cut;
         US_GC_Processed.Elevation_cut = Elevation_cut;
     % Interpolated profiles
-        US_GC_Processed.Xshore_int = Xshore_int;
-        US_GC_Processed.Elevation_int = Elevation_int;
+        US_GC_Processed.Xshore_int = Xshore_int_s;
+        US_GC_Processed.Elevation_int = Elevation_int_s;
     % Save out
         save('US_GC_data/US_GC_Processed.mat',"US_GC_Processed");
 %%
