@@ -1,8 +1,8 @@
 %{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% VERSION- v 1.0.0
-    Last edit: 4 January 2024
-    Edit made: 
+%% VERSION- v 1.0.1
+    Last edit: 8 January 2024
+    Edit made: Made into script to be more careful with directories
     Ryan Schanta
 %}
 
@@ -36,11 +36,15 @@ points specified by stations, and outputs to 2 txt files as tables.
 
     Future plans to incorporate a better station file functionality
 %}
-calc_skew_asy_use("C:/Users/rschanta/ML-Funwave-Work/Model-Run-Data/validate/data_1D.npy")
 
-function calc_skew_asy_use(comp_1D_npy)
+dir_to = 'C:/Users/rschanta/ML-Funwave-Work/Model-Run-Data/validate/';
+skasy_dir = 'Skasy-all/';
+
+calc_skew_asy_use(dir_to,skasy_dir)
+
+function calc_skew_asy_use(dir_to,skasy_dir)
     %% Read in the data
-    eta = readNPY(comp_1D_npy);
+    eta = readNPY([dir_to,'data_1D.npy']);
     disp('File read successfully');
     
     %% Simulation Time
@@ -79,8 +83,8 @@ function calc_skew_asy_use(comp_1D_npy)
         col_names = arrayfun(@num2str, sta, 'UniformOutput', false);
         skew_tab = array2table(skew, 'VariableNames', col_names);
         asy_tab = array2table(asy, 'VariableNames', col_names);
-        writetable(skew_tab,'skew_tab')
-        writetable(asy_tab, 'asy_tab')
+        writetable(skew_tab,[dir_to,skasy_dir,'skew_tab'])
+        writetable(asy_tab, [dir_to,skasy_dir,'asy_tab'])
         disp('Done generating files');
 
 %% Relevant Helper Functions Needed

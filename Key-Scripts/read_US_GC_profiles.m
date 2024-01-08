@@ -13,16 +13,20 @@ the affixes 'raw', 'cut', and 'int' correspondingly.
 clear 
 clc
 close all
+
+dir_to = 'C:/Users/rschanta/ML-Funwave-Work/Bathymetry-Data/US_GC_data/';
+
+%%
 Xshore_raw = {}; Xshore_cut = {}; Xshore_int = []; 
 Elevation_raw = {}; Elevation_cut = {}; Elevation_int = []; 
 latlong = [];
 for j = 1:3786
     try
         % Read in data
-        Xshore_raw_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Xshore']);
-        Elevation_raw_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/Elevation']);
-        lat_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/lat']);
-        long_i = h5read('./US_GC_data/Profile_data.h5',['/Profile/ID_',num2str(j),'/lon']);
+        Xshore_raw_i = h5read([dir_to,'Profile_data.h5'],['/Profile/ID_',num2str(j),'/Xshore']);
+        Elevation_raw_i = h5read([dir_to,'Profile_data.h5'],['/Profile/ID_',num2str(j),'/Elevation']);
+        lat_i = h5read([dir_to,'Profile_data.h5'],['/Profile/ID_',num2str(j),'/lat']);
+        long_i = h5read([dir_to,'Profile_data.h5'],['/Profile/ID_',num2str(j),'/lon']);
 
         % Store raw profiles
         Xshore_raw{end+1} = Xshore_raw_i;
@@ -87,11 +91,6 @@ Elevation_int_s = Elevation_int(sortedIndices, :);
         US_GC_Processed.Xshore_int = Xshore_int_s;
         US_GC_Processed.Elevation_int = Elevation_int_s;
     % Save out
-        save('US_GC_data/US_GC_Processed.mat',"US_GC_Processed");
-%%
-figure()
-    for j = 1:100
-        hold on
-        plot(Xshore_cut{j},Elevation_cut{j})
-    end
+        save([dir_to, 'US_GC_Processed.mat'],"US_GC_Processed");
+
 
