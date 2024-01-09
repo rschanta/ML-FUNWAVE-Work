@@ -3,100 +3,132 @@ work_dir = 'C:/Users/rschanta/ML-Funwave-Work/';
 D3_dir = 'Validation-Data/DUNE3_data/';
 D3_struc = load(fullfile(work_dir,D3_dir,"D3_struct.mat"));
 
-
+%% Clean
+close all
+clc
 
 
 %% Plot Profiles Accordingly- Test on Profile 5
-cla
-close
-
-%% Plot Data As Given
 rd = D3_struc.('Trial05').raw_data;
 wc = D3_struc.('Trial05').wave_condition;
-cla
-close all
+
+
+%% Plot Data As Given
+% Initial Work
+    % Grab before and after profiles
+        X_before = rd.bed_before(:,1)'; X_after = rd.bed_after(:,1)';
+        Y_before = -rd.bed_before(:,2)'; Y_after = -rd.bed_after(:,2)';
+    % Define offshore height
+        h = wc.h;
+    % Find position of offshore conditions
+        [~, i_off] = min(abs(Y_before + wc.h));
+    % Get position of wave gauges
+        WG = rd.WG_loc_x;
+        
+% Plot
 figure(1)
     hold on
 
     % Plot Before and After Profiles
-    plot(rd.bed_before(:,1),-rd.bed_before(:,2),'LineWidth',1.5,'Color','b','LineStyle','-')
-    plot(rd.bed_after(:,1),-rd.bed_after(:,2),'LineWidth',1.5,'Color','r','LineStyle','-')
+    plot(X_before,Y_before,'LineWidth',1.5,'Color','b','LineStyle','-')
+    plot(X_after,Y_after,'LineWidth',1.5,'Color','r','LineStyle','-')
 
     % Plot Position of Offshore Conditions
-    [~, index] = min(abs(rd.bed_before(:,2) - wc.h));
-    xline(rd.bed_before(index,1), 'LineStyle','-','Color','g','LineWidth',2)
+    xline(X_before(i_off), 'LineStyle','-','Color','g','LineWidth',2)
     
     % Plot Wave Gauges
-    gauges = rd.WG_loc_x;
-    plot([gauges; gauges], repmat(ylim',1,size(gauges,2)), 'Color',[0 0 0,0.5],'LineStyle','--','LineWidth',0.75);
+    plot([WG; WG], repmat(ylim',1,size(WG,2)), 'Color',[0 0 0,0.5],'LineStyle','--','LineWidth',0.75);
     
-    % Plot Properties\
+    % Plot Properties
     grid on
     legend('Bed Before','Bed After','Wave Gauges', 'Offshore', 'Location','southwest');
 
 %% Plot Processed Data
-rd = D3_struc.('Trial05').raw_data;
-wc = D3_struc.('Trial05').wave_condition;
-%cla
-%close all
+
     % Initial Work
         % Shift X coordinates to the left to the left
-            Xshift_bef = rd.bed_before(:,1)' - min(rd.bed_before(:,1));
-            Xshift_aft = rd.bed_after(:,1)' - min(rd.bed_after(:,1));
-            WG_shift = gauges - min(rd.bed_before(:,1));
+            X_bef_sh = X_before - min(X_before);
+            X_aft_sh = X_after - min(X_after);
+            WG_sh = WG - min(X_before);
             
-        % Elevation
+        % Flip Y coordinate directions as needed
             % flip
-            el_bef = fliplr(rd.bed_before(:,2)');
-            el_aft = fliplr(rd.bed_after(:,2)');
-        
+            Y_bef_fl = fliplr(Y_before);
+            Y_aft_fl = fliplr(Y_after);
+
+        % Find position of offshore Conditions
+        [~, i_off_fl] = min(abs(Y_bef_fl + h));
+
+% Plot
 figure(2)
         hold on
         
         % Plot Before and After Profiles
-        plot(Xshift_bef,-el_bef,'LineWidth',1.5,'Color','b','LineStyle','-')
-        plot(Xshift_aft,-el_aft,'LineWidth',1.5,'Color','r','LineStyle','-')
+        plot(X_bef_sh,Y_bef_fl,'LineWidth',1.5,'Color','b','LineStyle','-')
+        plot(X_aft_sh,Y_aft_fl,'LineWidth',1.5,'Color','r','LineStyle','-')
         
         % Plot Position of Offshore Conditions
-        [~, index] = min(abs(el_bef - wc.h));
-        xline(Xshift_bef(index), 'LineStyle','-','Color','g','LineWidth',2)
+        xline(X_bef_sh(i_off_fl), 'LineStyle','-','Color','g','LineWidth',2)
         
         % Plot Wave Gauges
-        plot([WG_sflip; WG_sflip], repmat(ylim',1,size(WG_sflip,2)), 'Color',[0 0 0,0.5],'LineStyle','--','LineWidth',0.75);
+        plot([WG_sh; WG_sh], repmat(ylim',1,size(WG_sh,2)), 'Color',[0 0 0,0.5],'LineStyle','--','LineWidth',0.75);
         
         % Plot Propreties
         grid('on');
         legend('Bed Before','Bed After','Offshore', 'Wave Gauges', 'Location','northwest');
+
 %% Plot Data Processed for 1024 sized FUNWAVE
-            % Index of Offshore
-            [~, i_o] = min(abs(el_bef - wc.h));
-
-            % Slice off last 775 entries
-            X_slice_end = Xshift_bef(i_o:end);
+     % Initial Work
+            % Slice off entries After Offshore (AO) conditions
+            X_bef_AO = X_bef_sh(i_off_fl:end);
    
-            % Interpolate End
-            X_end_int = linspace(X_slice_end(1),X_slice_end(end),775);
-            el_end_int = interp1(Xshift_bef,el_bef,X_end_int,"linear");
+            % Interpolate End (AO)
+            X_bef_AO_int = linspace(X_bef_AO(1),X_bef_AO(end),775);
+            Y_bef_AO_int = interp1(X_bef_sh,Y_bef_fl,X_bef_AO_int,"linear");
             
-            % Interpolate Beginning
-            dif = X_end_int(2)-X_end_int(1);
+            % Interpolate Beginning Before Offshore Conditions (BO)
+                % Ensure that spacing is the same on each side
+                    spacing = X_bef_AO_int(2)-X_bef_AO_int(1);
             
-            % Ensure spacing the same beforehand
-            X_beg_int = [];
-            for j = 1:249
-                new_x = X_end_int(1) - dif*j;
-                X_beg_int = [new_x, X_beg_int];
+                % Generate X values
+                X_bef_BO_int = [];
+                for j = 1:249
+                    new_x = X_bef_AO_int(1) - spacing*j;
+                    X_bef_BO_int = [new_x, X_bef_BO_int];
+    
+                end
 
-            end
-            el_beg_int = interp1(Xshift_bef,el_bef,X_beg_int);
+                % Generate Y values
+                Y_bef_BO_int = interp1(X_bef_sh,Y_bef_fl,X_bef_BO_int);
 
-            FW_slice_X = [X_beg_int, X_end_int];
-            FW_slice_Y = [el_beg_int, el_end_int]; 
+            % Combine to form total series for FUNWAVE
+            X_FW = [X_bef_BO_int, X_bef_AO_int];
+            Y_FW = [Y_bef_BO_int, Y_bef_AO_int]; 
 
-            [~, i_check] = min(abs(FW_slice_Y - wc.h));
-            figure(4)
-                plot(FW_slice_X,-FW_slice_Y)
+            % Shift left
+            X_FW = X_FW - min(X_FW);
+            % Check offshore position 
+            [~, i_check] = min(abs(Y_FW + h));
 
+            % Place Sponge at 180
+            i_sponge = 180;
+            
+% Plot
+figure(3)
+    hold on
+
+    % Plot Input Profile
+    plot(X_FW,Y_FW,'LineWidth',1.5,'Color','b','LineStyle','-')
+
+    % Plot Position of Offshore Conditions
+    xline(X_FW(i_check), 'LineStyle','-','Color','g','LineWidth',2)
+
+    % Plot Position of Offshore Conditions
+    xline(X_FW(i_sponge), 'LineStyle','-','Color','r','LineWidth',2)
+
+    % Plot Properties
+    grid on
+    legend('Bathymetry','Wavemaker','Sponge','southeast');
 
 
     
