@@ -29,10 +29,15 @@ figure(1)
     hold on
     plot(rd.bed_before(:,1),-rd.bed_before(:,2),'LineWidth',1.5,'Color','b','LineStyle','-')
     plot(rd.bed_after(:,1),-rd.bed_after(:,2),'LineWidth',1.5,'Color','r','LineStyle','-')
+
+    xline(rd.bed_before(index,1), 'LineStyle','-','Color','g','LineWidth',2)
     grid on
-    gauges = rd.WG_loc_x
+    gauges = rd.WG_loc_x;
     plot([gauges; gauges], repmat(ylim',1,size(gauges,2)), 'Color',[0 0 0,0.5],'LineStyle','--','LineWidth',0.75);
-    legend('Bed Before','Bed After','Wave Gauges', 'Location','southwest');
+    [~, index] = min(abs(rd.bed_before(:,2) - 2));
+   
+    
+    legend('Bed Before','Bed After','Wave Gauges', 'Offshore', 'Location','southwest');
 
 %% Processed
 % Shift to the left
@@ -53,8 +58,7 @@ figure(2)
     plot([WG_sflip; WG_sflip], repmat(ylim',1,size(WG_sflip,2)), 'Color',[0 0 0,0.5],'LineStyle','--','LineWidth',0.75);
     legend('Bed Before','Bed After','Wave Gauges', 'Location','southwest');
 %%
-[~, index] = min(abs(rd.bed_before(:,2) - 2));
-Xsflip_bef(index)
+
 
 
     
