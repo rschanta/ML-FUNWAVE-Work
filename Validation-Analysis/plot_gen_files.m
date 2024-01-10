@@ -88,12 +88,12 @@ figure(2)
             
             % Interpolate Beginning Before Offshore Conditions (BO)
                 % Ensure that spacing is the same on each side
-                    spacing = X_bef_AO_int(2)-X_bef_AO_int(1);
+                    DX = X_bef_AO_int(2)-X_bef_AO_int(1);
             
                 % Generate X values
                 X_bef_BO_int = [];
                 for j = 1:249
-                    new_x = X_bef_AO_int(1) - spacing*j;
+                    new_x = X_bef_AO_int(1) - DX*j;
                     X_bef_BO_int = [new_x, X_bef_BO_int];
     
                 end
@@ -123,12 +123,26 @@ figure(3)
     % Plot Position of Offshore Conditions
     xline(X_FW(i_check), 'LineStyle','-','Color','g','LineWidth',2)
 
-    % Plot Position of Offshore Conditions
+    % Plot Position of Sponge
     xline(X_FW(i_sponge), 'LineStyle','-','Color','r','LineWidth',2)
 
     % Plot Properties
     grid on
     legend('Bathymetry','Wavemaker','Sponge','southeast');
+
+%% Create a save bathy file
+    % 3 x 1024 array
+    bathy_FW = [Y_FW; Y_FW; Y_FW];
+    % other relevant information
+    DX = DX;
+    const_tab = table();
+    const_tab.DX = DX;
+    const_tab.AMP_WK = wc.Hs/2;
+    const_tab.TPERIOD = wc.Tp;
+    DY = 1;
+    writematrix(-bathy_FW, 'bathy_Trial05.txt')
+    writetable(const_tab,'Const_Trial05.txt')
+
 
 
     
