@@ -97,6 +97,8 @@ for tr = 5:24
     D3.Hrms = rd.Hrms;
     D3.Hmo = rd.Hmo;
     D3.H3 = rd.H3;
+    D3.eta_max = wc.eta_max;
+    D3.eta_min = wc.eta_min;
 
 %%% Add to structure
     D3c.(name) = D3;
