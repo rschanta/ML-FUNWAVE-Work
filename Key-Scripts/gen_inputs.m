@@ -1,19 +1,17 @@
-% GENERATE_INPUTS
+%%% GENERATE_INPUTS
 
-%{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% VERSION- v 1.0.1
-    Last edit: 4 January 2024
-    Edit made: 
-        - Changed rounding of tabular values in sumvars to accomodate more
-        decimal places
-    Ryan Schanta
+%{
+Last edit: 4 January 2024
+Edit made: 
+    - Changed rounding of tabular values in sumvars to accomodate more
+    decimal places
+Ryan Schanta
 %}
 
-
-
-%{ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{ 
+%% Description
 This function generates a series of 'input.txt' files for FUNWAVE, 
 labeled 'input_XXXXX.txt' in a subdirectory. A file summarizing the 
 parameters constant between each 'input.txt' file are output to 
@@ -50,12 +48,16 @@ parameters constant between each 'input.txt' file are output to
 
 %% Outputs
 
-% General Use Notes
+%% General Use Notes
     Respect the 'DO NOT EDIT' flags found in the headers or on individual
     lines
     
 %}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 %% Function Definition
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function gen_inputs(in,sum,out,overwrite,stge,stgi,stna,stno)

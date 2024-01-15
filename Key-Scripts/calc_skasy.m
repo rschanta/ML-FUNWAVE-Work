@@ -1,47 +1,127 @@
+%%% Name of Function/Script
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{
+Last edit: 15 January 2024
+Edit made: 
+    - Added preamble and cleaned up file directory notation
+
+%}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{ 
+%% Function or script
+This file is intended to be run as a SCRIPT
+
+%% Description
+This script calculates the skew and asymmetry of the wave time series at
+each point in the model domain for an ensemble of 1D FUNWAVE model runs. It
+outputs separate tables for skew, asymmetry, and the starting time for
+analysis (it excludes the portion of the time series before the wave has
+propagated to the given point.
+
+%% Dependencies
+'readNPY()': (MATLAB function)-  function to read numpy arrays into MATLAB. 
+        Provided via the `npy-matlab` repository at 
+        https://github.com/kwikteam/npy-matlab. Function and all required 
+        dependenceis found in `Helper-Functions` directory at the root.
+'compressed_outputs.py': (Python script)- function used to generate the
+        inputs `data_1D.npy`. See below.
+
+
+%% Arguments/Inputs
+'data_1D.npy': (numpy array)- numpy array storing the compressed 1D FUNWAVE 
+        Model outputs as calculated by the script `compressed_outputs.py`.
+        It is an array of size [no_tri, no_time, Mglob]. It MUST be named
+        `data_1D.npy`. 
+'dir_data_1D': (str)- name of folder containing `data_1D.npy`.
+
+%% Outputs
+'skew_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
+        row corresponds to a trial and each column corresponds to the
+        position in Mglob. Contains the skew at each of these points. Does
+        not have a header or row labels.
+'asy_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
+        row corresponds to a trial and each column corresponds to the
+        position in Mglob. Contains the asymmetry at each of these points. 
+        Does not have a header or row labels.
+'start_t_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
+        row corresponds to a trial and each column corresponds to the
+        position in Mglob. Contains the asymmetry at each of these points. 
+        Does not have a header or row labels.
+
+
+%% General Use Notes
+    All outputs are generated in a subdirectory named `skasy` within the
+    folder specified by 'dir_data_1D'
+    
+%}
+
+
+%% Inputs
+dir_data_1D = 'validate';
+
 %% Read in eta_file
-dir_to = 'C:/Users/rschanta/ML-Funwave-Work/Model-Run-Data/validate/';
-eta = readNPY([dir_to,'data_1D.npy']);
+dir_to = fullfile('..','Model-Run-Data',dir_data_1D, 'data_1D.npy');
+eta = readNPY(dir_to);
 
 %% Generate matrices for skew, asymmetry, and steady time
-skew_tab = zeros(1000,1024); asy_tab = zeros(1000,1024); steady_tab = zeros(1000,1024); 
-for j = 1:1000
-    % Squeeze out a trial 
+    % Get number of trials and Mglob
+        no_tri = size(eta,1);
+        Mglob = size(eta,3);
+    % Matrix outputs
+        skew_tab = zeros(no_tri,Mglob); 
+        asy_tab = zeros(no_tri,Mglob); 
+        start_t_tab = zeros(no_tri,Mglob); 
+
+%% Loop through each trial
+for j = 1:no_tri
+    % Squeeze out a trial, transpose, and convert to cell
         eta_i = squeeze(eta(j,:,:))';
         eta_i = num2cell(eta_i,2);
 
-    % Apply skasy function to each cell
-        skasy = cellfun(@calc_skasy, eta_i, 'UniformOutput',false);
+    % Apply skasy function to each cell using cellfun
+        skasy = cellfun(@calc_skasyF, eta_i, 'UniformOutput',false);
     
-    % Convert to matrix and output
+    % Convert to matrix, transpose, and output to each table
         skasy = cell2mat(skasy)';
         skew_tab(j,:) = skasy(1,:);
         asy_tab(j,:) = skasy(2,:);
-        steady_tab(j,:) = skasy(3,:);
-        disp(j)
+        start_t_tab(j,:) = skasy(3,:);
+        disp(['Processing Trial ', num2str(j)]); % display progress
 end
-%% Save Out
-dir_out = fullfile(dir_to,'Skasy/');
-if ~isfolder(dir_out)
-    mkdir(dir_out);
-end
+%% Save Outputs
+    % Output directory
+    dir_out = fullfile('..','Model-Run-Data',dir_data_1D, 'skasy');
+    
+    % Generate output directory if not already there
+    if ~isfolder(dir_out)
+        mkdir(dir_out);
+    end
 
-writematrix(skew_tab,fullfile(dir_out,'skew_tab.txt'))
-writematrix(asy_tab,fullfile(dir_out,'asy_tab.txt'))
-writematrix(steady_tab,fullfile(dir_out,'steady_tab.txt'))
+    % Write matrices to files
+        writematrix(skew_tab,fullfile(dir_out,'skew_tab.txt'))
+        writematrix(asy_tab,fullfile(dir_out,'asy_tab.txt'))
+        writematrix(start_t_tab,fullfile(dir_out,'start_t_tab.txt'))
 
 
 %% Function to Calculate Skew and Asymmetry
-function skasy = calc_skasy(eta)
+function skasy = calc_skasyF(eta)
 %{  
-    CALC_SKASY: Calculates the skew and asymmetry of a time series given by
-        `eta` during the time when
+    Description: Calculates the skew and asymmetry for each point in the
+        model domain for a given trial
 
-    arguments:
-        - eta: a 3D array (num_trials, time_sim, Mglob) from a 
-            data_1D.npy file
+    Arguments:
+        'eta': (cell array)- [1,no_time] array corresponding to the 
+            a time series of a wave at a point in the model domain
 
-    outputs:
-        -skasy: a 1x3 array of the form [skew, asymmetry, time_start]
+    Outputs:
+        'eta': (array)- 1x3 array of the form [skew, asymmetry, time_start] 
+    
+    Notes: This is intended to used in conjunction with the `cellfun`
+        function which applies a function to every cell within a cell
+        array. This, the cell array `eta_i` of dimension {Mglob,1} is used
+        above.
             
 
 %}
@@ -64,6 +144,7 @@ function skasy = calc_skasy(eta)
         hnn = hn'-ones(length(eta_n),1)*mean(hn);
         asy_num = mean(hnn.^3);
 
+    % Pacakage together for output
     skasy = [sk_num/denom, asy_num/denom,start_i];
     
 end
