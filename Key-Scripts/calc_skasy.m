@@ -2,9 +2,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
-Last edit: 15 January 2024
+Last edit: 16 January 2024
 Edit made: 
-    - Added preamble and cleaned up file directory notation
+    - Output as tables instead of matrices to better match the style of
+    sumvars.txt
 
 %}
 
@@ -70,9 +71,9 @@ eta = readNPY(dir_to);
         no_tri = size(eta,1);
         Mglob = size(eta,3);
     % Matrix outputs
-        skew_tab = zeros(no_tri,Mglob); 
-        asy_tab = zeros(no_tri,Mglob); 
-        start_t_tab = zeros(no_tri,Mglob); 
+        skew = zeros(no_tri,Mglob); 
+        asy = zeros(no_tri,Mglob); 
+        start_t = zeros(no_tri,Mglob); 
 
 %% Loop through each trial
 for j = 1:no_tri
@@ -85,11 +86,22 @@ for j = 1:no_tri
     
     % Convert to matrix, transpose, and output to each table
         skasy = cell2mat(skasy)';
-        skew_tab(j,:) = skasy(1,:);
-        asy_tab(j,:) = skasy(2,:);
-        start_t_tab(j,:) = skasy(3,:);
+        skew(j,:) = skasy(1,:);
+        asy(j,:) = skasy(2,:);
+        start_t(j,:) = skasy(3,:);
         disp(['Processing Trial ', num2str(j)]); % display progress
 end
+
+%% Convert to tables with the 'iter' column to match sumvars.txt
+    skew_tab = array2table(skew);
+    skew_tab = addvars(skew_tab, (1:size(eta,1))' , 'Before', 1, 'NewVariableNames', 'iter');
+
+    asy_tab = array2table(asy);
+    asy_tab = addvars(asy_tab, (1:size(eta,1))' , 'Before', 1, 'NewVariableNames', 'iter');
+
+    start_t_tab = array2table(start_t);
+    start_t_tab = addvars(start_t_tab, (1:size(eta,1))' , 'Before', 1, 'NewVariableNames', 'iter');
+    
 %% Save Outputs
     % Output directory
     dir_out = fullfile('..','Model-Run-Data',dir_data_1D, 'skasy');
@@ -99,10 +111,10 @@ end
         mkdir(dir_out);
     end
 
-    % Write matrices to files
-        writematrix(skew_tab,fullfile(dir_out,'skew_tab.txt'))
-        writematrix(asy_tab,fullfile(dir_out,'asy_tab.txt'))
-        writematrix(start_t_tab,fullfile(dir_out,'start_t_tab.txt'))
+    % Write tables to files
+    writetable(skew_tab,fullfile(dir_out,'skew_tab.txt'))
+    writetable(asy_tab,fullfile(dir_out,'asy_tab.txt'))
+    writetable(start_t_tab,fullfile(dir_out,'start_t_tab.txt'))
 
 
 %% Function to Calculate Skew and Asymmetry
