@@ -33,10 +33,16 @@ class LR_spatial:
         self.data = FW_data_1D
         return
     
-    def fit_LR(self):
-        ## Prepare inputs
-        X_tr = self.data_tr
-        X_te = self.data_te
+    def fit_LR(self, skasy):
+        x_te =   self.data[['SLP','Tperiod','AMP_WK','ratio']]
+        y_te = self.data[[skasy]]
+        mod = LinearRegression()
+        mod.fit(x_sk, y_sk)
+
+        ## Test model on training data
+        y_sk_p = pd.DataFrame(mod.predict(x_sk), columns=['skew'])
+
+        r2sktr = r2_score(y_sk, y_sk_p)
         
         ## Prepare outputs
     
@@ -66,3 +72,6 @@ data['pos'] = data['pos'].astype(int)
 
 foo = Yrain.values
 data['skew'] = foo[data['iter']-1,data['pos']]
+
+
+

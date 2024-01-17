@@ -94,7 +94,6 @@
 #%% Relevant Libraries
 import numpy as np
 import pandas as pd
-import copy
 from sklearn.model_selection import train_test_split
 #%% Class Definition
 
@@ -162,7 +161,7 @@ class FW_Spatial:
         
         
 #%% Room to debug
-
+'''
 dir_FW = "C:/Users/rschanta/ML-Funwave-Work/Model-Run-Data/validate/"
 
 
@@ -220,3 +219,4 @@ y_skt = data_yt[['skew']]
 
 y_sk_pte =  pd.DataFrame(mod.predict(x_skt), columns=['skew'])
 r2skte = r2_score(y_skt, y_sk_pte)
+'''
