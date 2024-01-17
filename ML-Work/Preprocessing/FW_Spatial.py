@@ -153,7 +153,7 @@ class FW_Spatial:
     def test_train_split(self,test_size,random_seed=None):
         ''' Performs a test/train split using test_size as the proportion of 
             the data to the test_set. Can set seed # via random_seed'''
-        X = self.data[['iter', 'SLP','Tperiod','AMP_WK','ratio']]
+        X = self.data[['iter', 'SLP','Tperiod','AMP_WK','ratio', 'pos']]
         y = self.data[['iter', 'skew','asy']]
         self.X_tr, self.X_te, self.y_tr, self.y_te = train_test_split(X, y, test_size=0.2, random_state=42)
         return
