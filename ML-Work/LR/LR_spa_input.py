@@ -23,7 +23,7 @@ from FW_data_1D import FW_data_1D
 
 
 #%% Define Class
-class LR_spa_input:
+class LR_spatial:
     '''
         Initialization:
             - Loads in data from a FW_data_1D object
@@ -46,7 +46,23 @@ dir_FW = "C:/Users/rschanta/ML-Funwave-Work/Model-Run-Data/validate/"
 
 
 validate = FW_data_1D(dir_FW)
-validate.test_train_split(0.2,42)
-#%%
+#validate.test_train_split(0.2,42)
 
-    
+#%%
+Xtrain = validate.sumvars
+Yrain = validate.skew
+
+#%%
+ratio = np.linspace(0,1,101)
+#%% Tile it up
+
+data = pd.concat([Xtrain] * 101)
+data['ratio'] = np.sort(np.tile(ratio, 1000))
+data['pos'] = (1024 - data['Xslp'])*data['ratio'] + data['Xslp']
+#X_train_tiled2['pos'] = X_train_tiled2['pos'].replace(np.inf, 0)
+data['pos'] = data['pos'].astype(int)
+#data['skew'] = Yrain.iloc(data['iter']-1,data['pos'])
+#merged_data = pd.merge(X_train_tiled2, Yrain, on=['iter', 'pos'], how='left')
+
+foo = Yrain.values
+data['skew'] = foo[data['iter']-1,data['pos']]
