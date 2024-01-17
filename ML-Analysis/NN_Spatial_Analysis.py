@@ -19,8 +19,8 @@ import pyarrow.parquet as pq
 
 ## Custom Modules
 #sys.path.append('C:/Users/rschanta/ML-Funwave-Work/ML-Work/Preprocessing')
-#sys.path.append('C:/Users/rschanta/ML-Funwave-Work/ML-Work/LR')
-from LR_Spatial import LR_spatial
+sys.path.append('C:/Users/rschanta/ML-Funwave-Work/ML-Work/NN')
+from NN_Spatial import NN_spatial
 from FW_Spatial import FW_Spatial
 from ML_utils import compress_outputs
 
@@ -28,17 +28,17 @@ from ML_utils import compress_outputs
 #%% VALIDATION DATA SET
 dir_val = "C:/Users/rschanta/ML-Funwave-Work/Model-Run-Data/validate/"
 
-FW_val = FW_Spatial(dir_val)
-FW_val.test_train_split(0.2,42)
+FW_data = FW_Spatial(dir_val)
+FW_data.test_train_split(0.2,42)
 
-LR_skew_val = LR_spatial(FW_val)
-LR_skew_val.fit('skew')
+NN_skew = NN_spatial(FW_data)
+NN_skew.fit('skew',10)
 
-LR_asy_va= LR_spatial(FW_val)
-LR_asy_va.fit('asy')
+NN_asy= NN_spatial(FW_data)
+NN_asy.fit('asy',10)
 
 ## Combine outputs
-LR_summary = compress_outputs(LR_skew_val, LR_asy_va)
+NN_summary = compress_outputs(NN_skew, NN_asy)
 #%%
-table = pa.Table.from_pandas(LR_summary)
-pq.write_table(table, '../Model-Run-Data/validate/LR_summary.parquet')
+table = pa.Table.from_pandas(NN_summary)
+pq.write_table(table, '../Model-Run-Data/validate/NN_summary.parquet')
