@@ -42,3 +42,6 @@ NN_summary = compress_outputs(NN_skew, NN_asy)
 #%%
 table = pa.Table.from_pandas(NN_summary)
 pq.write_table(table, '../Model-Run-Data/validate/NN_summary.parquet')
+
+#%%
+NN_skew.p.te_r2

@@ -208,12 +208,14 @@ for tr = 5:24
     D3.Yb = Yb; D3.Ya = Ya;
     D3.WG = WG;
 
+%%% Get offset to shift leftwards
+    D3.off = min(D3.Xb);
 
 %%% Profile Shifted Left 
     % Shift X coordinates left
-    D3.Xb_s = Xb - min(Xb); 
-    D3.Xa_s = Xa - min(Xa); 
-    D3.WG_s = WG - min(Xb); 
+    D3.Xb_s = Xb - D3.off; 
+    D3.Xa_s = Xa - D3.off; 
+    D3.WG_s = WG - D3.off; 
 
 %%% Profile cut off at MWL
     % Cut off NaNs
@@ -225,12 +227,12 @@ for tr = 5:24
         [~, cut_index] = min(abs(Yb_noNan - max(MWL_noNan)));
 
     % Cut out
-    D3.Xb_cut = Xb_s(1:cut_index); 
-    D3.Xa_cut = Xb_s(1:cut_index); 
+    D3.Xb_cut = D3.Xb_s(1:cut_index); 
+    D3.Xa_cut = D3.Xa_s(1:cut_index); 
     D3.Yb_cut = Yb(1:cut_index); 
     D3.Ya_cut = Ya(1:cut_index); 
         % Cut out wave gauges
-            D3.WG_cut = D3.WG_s(1:nnz(MWL_noNan));
+            D3.WG_cut = WG_s(1:nnz(MWL_noNan));
 
 
 

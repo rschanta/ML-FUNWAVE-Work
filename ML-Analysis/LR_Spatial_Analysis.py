@@ -19,7 +19,7 @@ import pyarrow.parquet as pq
 
 ## Custom Modules
 #sys.path.append('C:/Users/rschanta/ML-Funwave-Work/ML-Work/Preprocessing')
-#sys.path.append('C:/Users/rschanta/ML-Funwave-Work/ML-Work/LR')
+sys.path.append('C:/Users/rschanta/ML-Funwave-Work/ML-Work/LR')
 from LR_Spatial import LR_spatial
 from FW_Spatial import FW_Spatial
 from ML_utils import compress_outputs

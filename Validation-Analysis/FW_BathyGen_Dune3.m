@@ -71,7 +71,7 @@ tri = ['Trial',sprintf('%02d', trial_no)];
     Xc_WK = X_FW(250);
 
 %% Create FUNWAVE bathy file
-writematrix([h_FW; h_FW; h_FW], ['bathy_', tri,'.txt'])
+writematrix([h_FW; h_FW; h_FW; h_FW], ['bathy_', tri,'.txt'])
 disp(['DX is: ', num2str(DX)])
 %% Plot for Sanity
 tri = ['Trial',sprintf('%02d', trial_no)];
