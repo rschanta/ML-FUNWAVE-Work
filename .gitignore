@@ -7,3 +7,4 @@ Bathymetry-Data/
 Validation-Analysis/stacked_Dune3.txt
 *.mp4
 *.parquet
+*.mat

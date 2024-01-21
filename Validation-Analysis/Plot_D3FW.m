@@ -32,23 +32,24 @@ This file is used to compare the outputs of FW vs. the D3 actual data
     
     
 %}
-%% Playground
-eta = D3c.Trial05.eta;
-eta = eta(:,1:3);
-max(eta) - min(eta)
+
 
 %% Input
 trial_no = 5; 
+name = 'D3_AS';
 %% Import D3c Data
 D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
 tri = ['Trial',sprintf('%02d', trial_no)];
 %% Import FUNWAVE Results
-eta_out = load('./Try/eta_out.txt');
-bathyx = load('./Try/D3_Trial05_x.txt');
-bathyh = load('./Try/D3_Trial05_b.txt');
+eta_out = load(['./',name, '/',name,'_',tri, '_out.txt']);
+bathyx = load(['./',name, '/',name,'_',tri, '_x.txt']);
+bathyh = load(['./',name,'/', name,'_',tri, '_b.txt']);
+
+%% Specify length of trial
+len_t = length(eta_out)-1;
 %% Process FUNWAVE Results
 FW = struct();
-    FW.t = 1:600;
+    FW.t = 1:len_t;
     FW.eta = eta_out;
     FW.x = bathyx(1,:);
     FW.h = bathyh(1,:);
@@ -56,11 +57,11 @@ FW = struct();
 
 %animate_D3_Trial(D3c,5,false,eta_out,X_FW)
 close all
-D3D = DownsampleD3(D3c,trial_no,600);
-animate_D3_Trial(D3D,FW)
+D3D = DownsampleD3(D3c,trial_no,len_t);
+animate_D3_Trial(D3D,FW,len_t)
    
 %% Animate a Trial Function
-function animate_D3_Trial(D3D,FW)
+function animate_D3_Trial(D3D,FW,len_t)
 
     %%% Construct the figure
     f = figure(1);
@@ -84,7 +85,7 @@ function animate_D3_Trial(D3D,FW)
            
         % Loop through the times to animate 
         iter = 1;
-        for t = 1:600
+        for t = 1:len_t
 
             %%% Plot bathymetry offset by offshore MWL
             if iter == 1
@@ -106,7 +107,7 @@ function animate_D3_Trial(D3D,FW)
     
             %%% Animate using drawnow()
                 drawnow; 
-                pause(0.25)
+                pause(0.1)
             
         end
     
@@ -114,7 +115,7 @@ end
 
 %% Downsample Dune3 Data to integer values
 
-function D3D = DownsampleD3(D3c,tri_n,dur)
+function D3D = DownsampleD3(D3c,tri_n,len_t)
     %%% Initialize output structure
         D3C = struct();
     %%% Pull out structure and variables
@@ -132,8 +133,8 @@ function D3D = DownsampleD3(D3c,tri_n,dur)
     %%% Pull out the start time index out the beginning
         t0 = D3c.Trial05.t0;
         [~, t0_int] = min(abs(t0 - t_int));
-        t_D3 = t_int(t0_int:t0_int+dur-1);
-        eta_D3 = eta_int(t0_int:t0_int+599,:);
+        t_D3 = t_int(t0_int:t0_int+len_t-1);
+        eta_D3 = eta_int(t0_int:t0_int+len_t-1,:);
     %%% Store to Structure
         D3D.WG = D3c.(tri).WG_cut;
         D3D.eta = eta_D3;

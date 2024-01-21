@@ -22,8 +22,8 @@ classdef FW_write  < handle
 
 methods
     %% Construct to create input.txt file
-    function self = FW_write(dir,name)
-        self.path = [fullfile(dir,name),'.txt'];
+    function self = FW_write(name)
+        self.path = name;
         fid = fopen(self.path,'wt');
         fclose(fid);
         self.FW_vars = struct();
@@ -39,9 +39,13 @@ methods
         fclose(fid);
         % Add variable to structure (convert to double if possible)
         try
-            self.FW_vars.(param) = str2double(value);
+            convert = str2double(value);
+                if isnan(convert)
+                    self.FW_vars.(param) = value;
+                else
+                    self.FW_vars.(param) = convert;
+                end
         catch
-            self.FW_vars.(param) = value;
         end
 
     end

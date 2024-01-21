@@ -1,12 +1,14 @@
-%%% Analyze_D3.m
+%%% Plot_D3.m
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
 Last edit: 20 January 2024
 Edit made: 
     - Created
+    - Renamed to Plot_D3.m
 %}
 
+plot_monitor(2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{ 
 %% Function or script
@@ -43,7 +45,7 @@ tri = ['Trial',sprintf('%02d', trial_no)];
 
 %% 
 close all
-animate_D3_Trial(D3c,5,false)
+animate_D3_Trial(D3c,24,false)
 %% Animate a Trial Function
 
 

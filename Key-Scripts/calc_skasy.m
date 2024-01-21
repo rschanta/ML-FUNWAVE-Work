@@ -2,10 +2,12 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
-Last edit: 16 January 2024
+Last edit: 21 January 2024
 Edit made: 
-    - Output as tables instead of matrices to better match the style of
-    sumvars.txt
+    - Cleaned up skasy function itself to reside in startup.m to ensure
+    same skasy function is being used anywhere.
+    - skasy.m contains the function now
+    - skasy.m is less sensitive to 
 
 %}
 
@@ -35,22 +37,15 @@ propagated to the given point.
         Model outputs as calculated by the script `compressed_outputs.py`.
         It is an array of size [no_tri, no_time, Mglob]. It MUST be named
         `data_1D.npy`. 
-'dir_data_1D': (str)- name of folder containing `data_1D.npy`.
+'dir_data': (str)- directory to data_1D.npy is stored
 
 %% Outputs
-'skew_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
+'{var}_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
         row corresponds to a trial and each column corresponds to the
-        position in Mglob. Contains the skew at each of these points. Does
-        not have a header or row labels.
-'asy_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
-        row corresponds to a trial and each column corresponds to the
-        position in Mglob. Contains the asymmetry at each of these points. 
-        Does not have a header or row labels.
-'start_t_tab.txt': (CSV .txt file)- comma delimted CSV .txt file where each
-        row corresponds to a trial and each column corresponds to the
-        position in Mglob. Contains the asymmetry at each of these points. 
-        Does not have a header or row labels.
-
+        position in Mglob. Contains the {var} at each of these points. The
+        first column here is "iter" 
+'skasy.mat': (MATLAB structure)- MATLAB structure containing the tables in
+    .txt files.
 
 %% General Use Notes
     All outputs are generated in a subdirectory named `skasy` within the
@@ -60,10 +55,10 @@ propagated to the given point.
 
 
 %% Inputs
-dir_data_1D = 'validate';
+dir_data = fullfile('..','Model-Run-Data','validate');
 
 %% Read in eta_file
-dir_to = fullfile('..','Model-Run-Data',dir_data_1D, 'data_1D.npy');
+dir_to = fullfile(dir_data, 'data_1D.npy');
 eta = readNPY(dir_to);
 
 %% Generate matrices for skew, asymmetry, and steady time
@@ -77,91 +72,45 @@ eta = readNPY(dir_to);
 
 %% Loop through each trial
 for j = 1:no_tri
-    % Squeeze out a trial, transpose, and convert to cell
+    % Squeeze out a trial, transpose, and convert to cell array
         eta_i = squeeze(eta(j,:,:))';
         eta_i = num2cell(eta_i,2);
 
     % Apply skasy function to each cell using cellfun
-        skasy = cellfun(@calc_skasyF, eta_i, 'UniformOutput',false);
+        [skew_i, asy_i, start_ii] = cellfun(@skasy, eta_i, 'UniformOutput',false);
     
     % Convert to matrix, transpose, and output to each table
-        skasy = cell2mat(skasy)';
-        skew(j,:) = skasy(1,:);
-        asy(j,:) = skasy(2,:);
-        start_t(j,:) = skasy(3,:);
+        skew(j,:) =  cell2mat(skew_i)';
+        asy(j,:) = cell2mat(asy_i)';
+        start_t(j,:) = cell2mat(start_ii)';
         disp(['Processing Trial ', num2str(j)]); % display progress
 end
 
-%% Convert to tables with the 'iter' column to match sumvars.txt
-    skew_tab = array2table(skew);
-    skew_tab = addvars(skew_tab, (1:size(eta,1))' , 'Before', 1, 'NewVariableNames', 'iter');
 
-    asy_tab = array2table(asy);
-    asy_tab = addvars(asy_tab, (1:size(eta,1))' , 'Before', 1, 'NewVariableNames', 'iter');
-
-    start_t_tab = array2table(start_t);
-    start_t_tab = addvars(start_t_tab, (1:size(eta,1))' , 'Before', 1, 'NewVariableNames', 'iter');
-    
 %% Save Outputs
-    % Output directory
-    dir_out = fullfile('..','Model-Run-Data',dir_data_1D, 'skasy');
-    
-    % Generate output directory if not already there
-    if ~isfolder(dir_out)
-        mkdir(dir_out);
-    end
+    % Output directory for .txt files and structure
+        dir_out = fullfile(dir_data, 'skasy');
+        s = struct();
+    % Call output_skasy
+        s = output_skasy(skew,s,dir_out,'skew_tab');
+        s = output_skasy(asy,s,dir_out,'asy_tab');
+        s = output_skasy(start_t,s,dir_out,'start_t_tab');
+    % Save Structure
+        save(fullfile(dir_out,'skasy.mat'),'s');
 
-    % Write tables to files
-    writetable(skew_tab,fullfile(dir_out,'skew_tab.txt'))
-    writetable(asy_tab,fullfile(dir_out,'asy_tab.txt'))
-    writetable(start_t_tab,fullfile(dir_out,'start_t_tab.txt'))
-
-
-%% Function to Calculate Skew and Asymmetry
-function skasy = calc_skasyF(eta)
-%{  
-    Description: Calculates the skew and asymmetry for each point in the
-        model domain for a given trial
-
-    Arguments:
-        'eta': (cell array)- [1,no_time] array corresponding to the 
-            a time series of a wave at a point in the model domain
-
-    Outputs:
-        'eta': (array)- 1x3 array of the form [skew, asymmetry, time_start] 
-    
-    Notes: This is intended to used in conjunction with the `cellfun`
-        function which applies a function to every cell within a cell
-        array. This, the cell array `eta_i` of dimension {Mglob,1} is used
-        above.
-            
-
-%}
-
-    % Cut out any dead time at the beginning
-        start_i = find(abs(eta) > 0.001 * max(abs(eta)), 1);
-        eta = eta(start_i:end);
-
-    % Subtract out mean
-        eta_n = eta - mean(eta); % Subtract out mean
-
-    % Denominator for skew and asymmetry
-        denom = (mean(eta_n.^2))^(1.5); 
-
-    % Numerator for skew
-        sk_num = mean(eta_n.^3);
-    
-    % Numerator for Asymmetry
-        hn = imag(hilbert(eta_n));
-        hnn = hn'-ones(length(eta_n),1)*mean(hn);
-        asy_num = mean(hnn.^3);
-
-    % Pacakage together for output
-    skasy = [sk_num/denom, asy_num/denom,start_i];
-    
+%% Helper Functions
+function stru = output_skasy(arr,stru,dir_out,name)
+    %%% Convert to tabular format
+        tab = array2table(arr);
+        tab = addvars(tab, (1:size(tab,1))' , 'Before', 1, 'NewVariableNames', 'iter');
+    %%% Create dir_out if it doesn't exist
+        if ~isfolder(dir_out)
+             mkdir(dir_out);
+        end
+    %%% Write file based on type
+        writetable(tab,fullfile(dir_out,[name,'.txt']))
+        stru.(name) = tab;
 end
-
-
 
 
 

@@ -1,10 +1,11 @@
-%%% Gen_Bathy_D3.m
+%%% FW_Inputs_D3.m
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
 Last edit: 20 January 2024
 Edit made: 
     - Created File
+    - Renamed from Gen_BathyDE >> FW_Inputs_D3
 %}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,14 +41,18 @@ file, and a summary file
 % Trial number from Dune3 Dataset
     trial_no = 5; 
 % Name that will form the beginning of the input.txt and bathy files
-    name = 'D3_';
-% Name of folder to generate files in
-    folder = 'Try'
+    name = 'D3_AS';
 
+%% File/Directories
+    % Create Output directory for files generated
+        mkdir(name)
+    % Create file name base for specific files generated
+        tri = ['Trial',sprintf('%02d', trial_no)];
+        file_name = [name,'_',tri];
 
 %% Import D3c
 D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
-tri = ['Trial',sprintf('%02d', trial_no)];
+
 
 %% Process into stable FUNWAVE input
 %{
@@ -58,27 +63,33 @@ tri = ['Trial',sprintf('%02d', trial_no)];
 %}
 
 %%% Pull out data needed
+    % Structure for stability info
+        s = struct();
     % Pull out cross-shore and vertical coordinates
         X = D3c.(tri).Xb_cut; 
-        Z = D3c.(tri).Yb_cut;
+        Z = D3c.(tri).Yb_cut; 
     % Convert profile to depth by using the maximum MWL as origin
-        depth = max(D3c.(tri).MWL);
-        h = depth - Z;
+        depth = max(D3c.(tri).MWL); s.depth = depth;
+        h = depth - Z; 
+        h_max = max(h); s.h_max = h_max;
     % Pull out wave period
-        T = D3c.(tri).Tp; 
+        T = D3c.(tri).Tp; s.T = T;
 
 %%% Stability criterion
     % Calculate k, wavelenth, and kh
-        k = -fzero(@(k) (2*pi/T)^2-9.81*k*tanh(k*max(h)),0);
-        L = 2*pi/k;
-        kh = max(k*h);
+        k = -fzero(@(k) (2*pi/T)^2-9.81*k*tanh(k*h_max),0); s.k = k;
+        L = 2*pi/s.k; s.L = L;
+        kh = max(s.k*h_max); s.kh = kh;
     % Find DH stability limits 
-        DX_min = max(h)/15; % water depth requirement
-        DX_max = L/60; % at least 60 points per wavelength
+        DX_min = h_max/15; s.DX_min = DX_min;% water depth requirement
+        DX_max = L/60; s.DX_max = DX_max;% at least 60 points per wavelength
+    % Save stability structure
+        save(['./',name,'./',file_name,'_s.mat'],'s')
+
         
-%%% Choose a reasonable DX value, here just tehe average of min and max
+%%% Choose a reasonable DX value, here just the average of min and max
     % Find average of DX_min and DX_max
-        DX = mean([DX_min,DX_max]);
+        DX = mean([s.DX_min,s.DX_max]);
     % Round to 2 decimal places
         DX = round(DX,2);
         DY = DX;
@@ -97,26 +108,27 @@ tri = ['Trial',sprintf('%02d', trial_no)];
     Nglob = 4;
 
 %%% Deal with Wavemaker specification
-    % Specify X position of Wavemaker (1/5 into the model domain)
-        M_WK = 0.2*Mglob;
-    % Find Xc_WK
-        Xc_WK = X_FW(round(0.2*Mglob));
-    % Find DEP_WK
-        DEP_WK = h_FW(M_WK);
-    % Smooth out 2 depth points adjacent to wavemaker as well
-        h_FW(M_WK-2:M_WK+2) = DEP_WK;
-    AMP_WK = 1.2;
+    %%% Xc_WK and DEP_WK Processing
+        % Specify X position of Wavemaker (1/5 into the model domain)
+            M_WK = 0.2*Mglob;
+        % Find Xc_WK
+            Xc_WK = X_FW(round(0.2*Mglob));
+        % Find DEP_WK
+            DEP_WK = h_FW(M_WK);
+        % Smooth out 2 depth points adjacent to wavemaker as well
+            h_FW(M_WK-2:M_WK+2) = DEP_WK;
 
-%% Create FUNWAVE bathy file
-    % File names
-        mkdir(folder)
-        file_name = [name,tri];
-        writematrix([X_FW; X_FW; X_FW; X_FW], fullfile('./', folder,[file_name,'_x.txt']))
-        writematrix([h_FW; h_FW; h_FW; h_FW], fullfile('./', folder,[file_name,'_b.txt']))
+    %%% Define AMP_WK based on half of the HRMS of the first 3 points
+    AMP_WK = mean(D3c.(tri).Hrms(1:3)/2);
+
+%% Create FUNWAVE bathy files
+    %%% Write actual file that FUNWAVE needs
+        writematrix([h_FW; h_FW; h_FW; h_FW], fullfile('./', name,[file_name,'_b.txt']))
+    %%% Save the X-Values that go along with each point too
+        writematrix(X_FW, fullfile('./', name,[file_name,'_x.txt']));
+        
 
 %% Plot for Sanity
-tri = ['Trial',sprintf('%02d', trial_no)];
-
 %%% Data as Given
     %%% Pull out variables
         Xb_cut = D3c.(tri).Xb_cut; Xa_cut = D3c.(tri).Xa_cut;
@@ -166,19 +178,11 @@ tri = ['Trial',sprintf('%02d', trial_no)];
         grid on
         legend(['Profile:', ' DX = 0.1459,   DY = 1,   Mglob = 1204,   Nglob = 3'] ,['Sponge: ', 'Width (West) = 26.1074'], ['WaveMaker: ', 'XcWK = 36.3170', ',   DEPWK = 2.16'], 'Depth Datum @ 2.16', 'Location','southoutside')
 
-        % a = gca; % get the current axis;
-        % % set the width of the axis (the third value in Position) 
-        % % to be 60% of the Figure's width
-        % a.Position(3) = 0.6;
-        % put the textbox at 75% of the width and
-        % label = {'\textbf{PARAMETERS}',['DX: ' num2str(DX), ' Mglob: ', num2str(Mglob)], ['DY: ' num2str(DY), ' Nglob: ', num2str(Mglob)]}
-        % annotation('textbox', [0.75, 0.5, 0.1, 0.5], 'String', label, 'Interpreter','latex')
-
 
 %% Create input.txt file
 %%% Create file using FW_Write class
     addpath('../Key-Scripts/')
-    f = FW_write(['./', folder, '/'],[file_name,'_i']);
+    f = FW_write(fullfile('./', name,[file_name,'_i.txt']));
 %%% Populate File
     f.TITLE(); 
         f.set('TITLE',file_name)
@@ -189,7 +193,7 @@ tri = ['Trial',sprintf('%02d', trial_no)];
     f.DIMENSION();
         f.set('Mglob', Mglob); f.set('Nglob',Nglob)
     f.TIME()
-        f.set('TOTAL_TIME','600.0');f.set('PLOT_INTX','1.0');
+        f.set('TOTAL_TIME','1450.0');f.set('PLOT_INTX','1.0');
         f.set('PLOT_INTV_STATION', '0.5'); f.set('SCREEN_INTV', '1.0');
     f.GRID()
         f.set('DX',DX); f.set('DY',DY)
@@ -206,7 +210,7 @@ tri = ['Trial',sprintf('%02d', trial_no)];
         f.set('DIFFUSION_SPONGE', 'F'); f.set('FRICTION_SPONGE', 'T');
         f.set('DIRECT_SPONGE', 'T'); f.set('Csp', '0.0');
         f.set('CDsponge', '1.0');
-        f.set('Sponge_west_width', '180.0'); f.set('Sponge_east_width', '0.0');
+        f.set('Sponge_west_width', '3.0'); f.set('Sponge_east_width', '0.0');
         f.set('Sponge_south_width', '0.0'); f.set('Sponge_north_width', '0.0');
     f.NUMERICS()
         f.set('CFL', '0.4'); f.set('FroudeCap', '3.0');  
@@ -217,8 +221,12 @@ tri = ['Trial',sprintf('%02d', trial_no)];
     f.WAVE_AVERAGE()
         f.set('T_INTV_mean', '10.0'); f.set('STEADY_TIME', '10.0');
     f.OUTPUT()
-        f.set('DEPTH_OUT','F'); f.set('WaveHeight','T'); 
+        f.set('DEPTH_OUT','T'); f.set('WaveHeight','T'); 
         f.set('ETA','T'); f.set('MASK','F');
-        f.set('RESULT_FOLDER', './output/')
+        f.set('RESULT_FOLDER', './output2/')
+%% Save FW Input structure
+    FW_vars = f.FW_vars;
+    save(['./',name,'./',file_name,'_i.mat'],'FW_vars')
+
         
 

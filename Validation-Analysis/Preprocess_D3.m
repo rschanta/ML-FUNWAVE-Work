@@ -1,4 +1,4 @@
-%%% Preprocess_Dune3.m
+%%% Preprocess_D3.m
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
@@ -7,6 +7,7 @@ Edit made:
     - Deleted last part to generate bathy file- doesn't make sense here
     - Refactored rest of directory and made sure everything was working
     - Added "off" variable 
+    - Renamed to "Preprocess_Dune3.m" >> "Preprocess_D3.m" 
 
 %}
 

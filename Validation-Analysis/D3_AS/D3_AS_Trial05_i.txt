@@ -2,7 +2,7 @@
   ! NOTE: all input parameter are capital sensitive
   ! --------------------TITLE------------------------------------- 
   ! title only for log file 
-TITLE = D3_Trial05
+TITLE = D3_AS_Trial05
 
   ! -------------------PARALLEL INFO-----------------------------
   ! 
@@ -18,7 +18,7 @@ PY = 2
   !                                 need slope,SLP starting point, Xslp
   !                                 and depth_flat
 DEPTH_TYPE = DATA
-DEPTH_FILE = ./bathy/D3_Trial05.txt
+DEPTH_FILE = ./bathy/D3_AS_Trial05_b.txt
 
   ! ------------------DIMENSION-----------------------------
   ! global grid dimension
@@ -28,7 +28,7 @@ Nglob = 4
   ! ----------------- TIME----------------------------------
   ! time: total computational time/ plot time / screen interval
   ! all in seconds
-TOTAL_TIME = 600
+TOTAL_TIME = 1450.0
 PLOT_INTX = 1.0
 PLOT_INTV_STATION = 0.5
 SCREEN_INTV = 1.0
@@ -56,7 +56,8 @@ DY = 0.23
 WAVEMAKER = WK_REG
 DEP_WK = 1.824
 Xc_WK = 8.97
-AMP_WK = 1.2
+AMP_WK = 0.20214
+Tperiod = 4.5449
 Theta_WK = 0.0
 Delta_WK = 3.0
 
@@ -79,7 +80,7 @@ FRICTION_SPONGE = T
 DIRECT_SPONGE = T
 Csp = 0.0
 CDsponge = 1.0
-Sponge_west_width = 180.0
+Sponge_west_width = 3.0
 Sponge_east_width = 0.0
 Sponge_south_width = 0.0
 Sponge_north_width = 0.0
@@ -114,8 +115,8 @@ STEADY_TIME = 10.0
   ! -----------------OUTPUT-----------------------------
   ! stations
   ! if NumberStations>0, need input i,j in STATION_FILE
-DEPTH_OUT = F
+DEPTH_OUT = T
 WaveHeight = T
 ETA = T
 MASK = F
-RESULT_FOLDER = ./output/
+RESULT_FOLDER = ./output2/
