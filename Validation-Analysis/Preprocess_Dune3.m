@@ -2,11 +2,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
-Last edit: 16 January 2024
+Last edit: 20 January 2024
 Edit made: 
-    - Added preamble
-    - Corrected inverted profiles
-    - Moved bathy generation to separate script FW_BathyGen_Dune3
+    - Deleted last part to generate bathy file- doesn't make sense here
+    - Refactored rest of directory and made sure everything was working
+    - Added "off" variable 
 
 %}
 
@@ -105,6 +105,7 @@ none, provided that the '../Validation-Data/DUNE3_data' is there
                                     - Xa_s
                                     - WG_s:
                                     - Xos_s:
+                                    - off: amount of shift (min(Xb))
 
                             %%% Cut Variables
                                 The following variables cut the profile
@@ -232,7 +233,7 @@ for tr = 5:24
     D3.Yb_cut = Yb(1:cut_index); 
     D3.Ya_cut = Ya(1:cut_index); 
         % Cut out wave gauges
-            D3.WG_cut = WG_s(1:nnz(MWL_noNan));
+            D3.WG_cut = D3.WG_s(1:nnz(MWL_noNan));
 
 
 
@@ -316,15 +317,4 @@ tri = ['Trial',sprintf('%02d', trial_no)];
         sgtitle(tri)
 
 
-%% Create a save bathy file
-    % % 3 x 1024 array
-    % bathy_FW = [Y_FW; Y_FW; Y_FW];
-    % % other relevant information
-    % DX = DX;
-    % const_tab = table();
-    % const_tab.DX = DX;
-    % const_tab.AMP_WK = wc.Hs/2;
-    % const_tab.TPERIOD = wc.Tp;
-    % DY = 1;
-    % writematrix(-bathy_FW, 'bathy_Trial05.txt')
-    % writetable(const_tab,'Const_Trial05.txt')
+
