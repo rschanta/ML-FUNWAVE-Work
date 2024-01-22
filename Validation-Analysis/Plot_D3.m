@@ -8,7 +8,7 @@ Edit made:
     - Renamed to Plot_D3.m
 %}
 
-plot_monitor(2)
+%plot_monitor(2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{ 
 %% Function or script

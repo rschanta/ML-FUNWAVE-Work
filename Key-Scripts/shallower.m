@@ -1,11 +1,4 @@
-
-%%
-g = 5;
-h=  4
-%%
-new_gen_inputss('../Model-Run-Data/')
-%%
-function new_gen_inputss(master_dir)
+function shallower(master_dir)
     %%% Folder Structure
         % Construct master_dir
             super_dir = fullfile(master_dir,dbstack().name);
