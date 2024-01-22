@@ -55,9 +55,31 @@ FW = struct();
     FW.h = bathyh(1,:);
     FW.MWL = D3c.Trial05.MWL;
 
-%animate_D3_Trial(D3c,5,false,eta_out,X_FW)
+
 close all
+%%
 D3D = DownsampleD3(D3c,trial_no,len_t);
+
+%% Skew and Asymmetry Plot
+    s = struct(); s.D3_X = D3D.WG; s.FW_X = bathyx;
+    [s.D3_skew, s.D3_asy, s.D3_t] = skasy(D3D.eta);
+    [s.FW_skew, s.FW_asy, s.FW_t] = skasy(eta_out);
+
+    %%% Figure
+        figure(2)
+            hold on
+            % SKEW
+                plot(s.D3_X,s.D3_skew,'Color','b','LineStyle','-');
+                plot(s.FW_X,s.FW_skew,'Color','b','LineStyle','--');
+            % ASYMMETRY
+                plot(s.D3_X,s.D3_asy,'Color','r','LineStyle','-');
+                plot(s.FW_X,s.FW_asy,'Color','r','LineStyle','--');
+            % PLOT SETTINGS
+                grid on
+                title('Skew vs. Assymetry in the Cross Shotre: FUNWAVE vs. Dune 3')
+                subtitle('Trial 5');
+                legend('Dune 3: Skew', 'Funwave: Skew','Dune 3: Asy', 'Funwave: Asy' )
+%%
 animate_D3_Trial(D3D,FW,len_t)
    
 %% Animate a Trial Function
@@ -68,7 +90,7 @@ function animate_D3_Trial(D3D,FW,len_t)
         % Initialize plot and title
             % Plot properties
                 hold on
-                title(['Plot of Dune 3 Trial ', num2str(5)]);
+                title(['Plot of Dune 3 cs. FUNWAVE Simulation Trial ', num2str(5)]);
             % Plot Dune 3 Results
                 D3 = plot(D3D.WG(1,:), D3D.eta(1,:),'Color','r', 'LineStyle','--'); 
             % Plot FUNWAVE Results

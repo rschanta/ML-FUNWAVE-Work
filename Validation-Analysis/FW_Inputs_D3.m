@@ -41,7 +41,7 @@ file, and a summary file
 % Trial number from Dune3 Dataset
     trial_no = 5; 
 % Name that will form the beginning of the input.txt and bathy files
-    name = 'D3_AS';
+    name = 'D3_AS2';
 
 %% File/Directories
     % Create Output directory for files generated
@@ -223,7 +223,7 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
     f.OUTPUT()
         f.set('DEPTH_OUT','T'); f.set('WaveHeight','T'); 
         f.set('ETA','T'); f.set('MASK','F');
-        f.set('RESULT_FOLDER', './output2/')
+        f.set('RESULT_FOLDER', ['./outputs/',name,'_',tri, '/'])
 %% Save FW Input structure
     FW_vars = f.FW_vars;
     save(['./',name,'./',file_name,'_i.mat'],'FW_vars')

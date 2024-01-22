@@ -50,6 +50,24 @@ methods
 
     end
 
+    %% Set a float variable
+    function setf(self,param,value)
+        % Open file
+            fid = fopen(self.path, 'a');
+        % Convert to a String
+            value_s = string(value);
+        % Add .0 if needed to convert to a Fortran float
+            if ~contains(value_s, '.')
+                value_s = strcat(value_s, '.0');
+            end
+        % Set parameter in file
+            fprintf(fid,strcat(string(param), " = ",value_s,"\n"));
+        % Close file
+            fclose(fid);
+        % Add variable to structure (convert to double if possible)
+             self.FW_vars.(param) = value;
+    end
+
     %% Descriptive Comments
     function TITLE(self)
         fid = fopen(self.path, 'a');

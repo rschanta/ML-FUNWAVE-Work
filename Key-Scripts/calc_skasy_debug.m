@@ -70,7 +70,7 @@ eta = readNPY(dir_to);
         skasy_arr = zeros(3,no_tri,Mglob); 
 
 %% Loop through each trial
-for j = 1:no_tri
+for j = 1:8
     % Squeeze out a trial
         eta_field_j = squeeze(eta(j,:,:));
     % Calculate skasy
