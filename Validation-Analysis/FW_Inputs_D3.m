@@ -60,9 +60,9 @@ file, and a summary file in the form of a structure.
 % Trial number from Dune3 Dataset
     trial_no = 24; 
 % Name that will form the beginning of the input.txt and bathy files
-    run_name = 'D36';
+    run_name = 'D38';
 spatio = struct();
-for j = 5:24
+for j = 5:8
     spatio = FW_Inputs_D3_f(out_dir,j,run_name,spatio);
     disp(['Working on Trial ', num2str(j)])
 end
@@ -74,7 +74,7 @@ function  spatio = FW_Inputs_D3_f(out_dir,trial_no,run_name,spatio)
     % Add Trial Folder for constants
         trial_name = ['Tr',sprintf('%02d', trial_no)];
         tri = ['Trial',sprintf('%02d', trial_no)];
-        name = fullfile(out_dir,run_name, trial_name);
+        name = fullfile(out_dir,run_name);
     % Add bathymetry and input folders
         bathy_folder = fullfile(out_dir,run_name,[run_name,'-b']);
         input_folder = fullfile(out_dir,run_name,[run_name,'-i']);
@@ -125,8 +125,9 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
     % Find DH stability limits 
         DX_min = h_max/15; s.DX_min = DX_min;% water depth requirement
         DX_max = L/60; s.DX_max = DX_max;% at least 60 points per wavelength
-    % Save stability structure
-        save(fullfile(name,[file_name,'_stab.mat']),'s')
+    % Save stability structure to larger structure
+        spatio.stability = s;
+        %save(fullfile(name,[file_name,'_stab.mat']),'s')
 
         
 %%% Choose a reasonable DX value, here just the average of min and max
@@ -175,8 +176,8 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
     %%% Write actual file that FUNWAVE needs
         writematrix([h_FW; h_FW; h_FW; h_FW], fullfile(bathy_folder,[file_name,'_b.txt']));
     %%% Save the X-Values that go along with each point too
-        writematrix(X_FW, fullfile('./', name,[file_name,'_x.txt']));
-        
+        %writematrix(X_FW, fullfile('./', name,[file_name,'_x.txt']));
+        spatio.X = X_FW;
 
 %% Generate Plot
 close all
@@ -208,7 +209,7 @@ hold on
                 ['Depth @ Datum: ', num2str(h_max)],...
                 'Location','southoutside')
     % Save plot
-        saveas(gcf,fullfile('./', name,[file_name,'_plot.png']))
+        saveas(gcf,fullfile('./', name,[trial_name,'_plot.png']))
 
 
 %% Create input.txt file
@@ -274,6 +275,7 @@ hold on
         f.set('RESULT_FOLDER', ['/lustre/scratch/rschanta/',run_name,'/',trial_name, '/']);
 %% Save FW Input structure
     FW_vars = f.FW_vars;
-    save(fullfile('./', name,[file_name,'_s.mat']),'FW_vars')
+    %save(fullfile('./', name,[file_name,'_FW_in.mat']),'FW_vars')
+    spatio.FW_in.mat = FW_vars;
 end
 
