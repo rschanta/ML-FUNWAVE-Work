@@ -1,4 +1,4 @@
-%%% FW_Inputs_D3.m
+%%% FWI_nosponge.m
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
@@ -7,8 +7,8 @@ Last edit: 22 January 2024
 Last Version Made: 
 
 Edit made: 
-    - Edited to output to subdirectory to
-        ../Validation-Data/D3-Funwave-Data
+    - Moved to subfolder
+    - Version without sponge layer
 %}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,7 +26,7 @@ file, and a summary file in the form of a structure.
 'Preprocess_Dune3.mat': (.m script) - script that generates D3c.m
 
 'D3c': (.mat structure)- assumed to be saved in 
-        '../Validation-Data/DUNE3_data/D3c.mat'
+        '../../Validation-Data/DUNE3_data/D3c.mat'
 
 %% Arguments/Inputs
 'run_name': (str)- name for the run variation
@@ -34,7 +34,7 @@ file, and a summary file in the form of a structure.
 'trial_no': (int)- number of trial to generate bathy file for
 
 %% Outputs
-    NOTE: All output in ../Validation-Data/D3-Funwave-Data/{run_name}
+    NOTE: All output in ../../Validation-Data/D3-Funwave-Data/{run_name}
 
     '{run_name}_tr{trial_no}_b.txt': (.txt file): bathymetry file Funwave
         needs to run for the given trial generated with the script
@@ -56,11 +56,11 @@ file, and a summary file in the form of a structure.
 
 %% Input
 % Directory for Output
-    out_dir = '../Validation-Data/D3-Funwave-Data';
+    out_dir = '../../Validation-Data/D3-Funwave-Data';
 % Trial number from Dune3 Dataset
     trial_no = 24; 
 % Name that will form the beginning of the input.txt and bathy files
-    run_name = 'D36';
+    run_name = 'D3NS';
 spatio = struct();
 for j = 5:24
     spatio = FW_Inputs_D3_f(out_dir,j,run_name,spatio);
@@ -86,7 +86,7 @@ function  spatio = FW_Inputs_D3_f(out_dir,trial_no,run_name,spatio)
         file_name = [run_name,'_',trial_name];
 
 %% Import D3c
-D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
+D3c = load('../../Validation-Data/DUNE3_data/D3c.mat');
 
 
 %% Process into stable FUNWAVE input
@@ -158,9 +158,9 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
         % Specify X position of Wavemaker (1/5 into the model domain)
             M_WK = round(0.2*Mglob);
 
-        % Specify the X position of the Sponge Layer (0.6*L)
-            Sponge_West_M = round(0.6*L);
-            Sponge_West = X_FW(Sponge_West_M);
+        % CHANGE HERE!
+            Sponge_West_M = 0;
+            Sponge_West = 0;
         % Find Xc_WK
             Xc_WK = X_FW(round(0.2*Mglob));
         % Find DEP_WK
@@ -213,7 +213,7 @@ hold on
 
 %% Create input.txt file
 %%% Create file using FW_Write class
-    addpath('../Key-Scripts/')
+    addpath('../../Key-Scripts/')
     f = FW_write(fullfile(input_folder,[file_name,'_i.txt']));
 %%% Populate File
     f.TITLE(); 
