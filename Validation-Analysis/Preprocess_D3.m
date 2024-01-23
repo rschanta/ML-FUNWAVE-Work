@@ -202,6 +202,8 @@ for tr = 5:24
     Xb = rd.bed_before(:,1)'; Xa = rd.bed_after(:,1)';
     Yb = rd.bed_before(:,2)'; Ya = rd.bed_after(:,2)';
 
+    % Note: Raw Profiles have some repeated points. Need to be removed!
+
     % Position of Wave Gauges
     WG = rd.WG_loc_x;
 

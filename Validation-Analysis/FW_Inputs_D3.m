@@ -2,10 +2,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV HISTORY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
-Last edit: 20 January 2024
+Last edit: 22 January 2024
 Edit made: 
-    - Created File
-    - Renamed from Gen_BathyDE >> FW_Inputs_D3
+    - Edited to output to subdirectory to
+        ../Validation-Data/D3-Funwave-Data
 %}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -17,7 +17,7 @@ This file is intended to be run as a SCRIPT
 This script takes a D3c structure and generates a FUNWAVE bathy file for 
 an input trial that enforces stability criteria and also creates the 
 FUNWAVE input file for it. It outputs the input.txt file, the bathy.txt
-file, and a summary file
+file, and a summary file in the form of a structure. 
 
 %% Dependencies
 'Preprocess_Dune3.mat': (.m script) - script that generates D3c.m
@@ -26,10 +26,24 @@ file, and a summary file
         '../Validation-Data/DUNE3_data/D3c.mat'
 
 %% Arguments/Inputs
+'run_name': (str)- name for the run variation
+
 'trial_no': (int)- number of trial to generate bathy file for
 
 %% Outputs
-'Dune3_Trial_{tri}_bathy': (.txt file)- 
+    NOTE: All output in ../Validation-Data/D3-Funwave-Data/{run_name}
+
+    '{run_name}_tr{trial_no}_b.txt': (.txt file): bathymetry file Funwave
+        needs to run for the given trial generated with the script
+
+    '{run_name}_tr{trial_no}_i.txt': (.txt file): input file Funwave
+        needs to run for the given trial generated with the script
+
+    '{run_name}_tr{trial_no}_x.txt': (.txt file): cross-shore coordinates
+        corresponding to the heights listed in the _b file
+
+    '{run_name}_tr{trial_no}_s': (.mat file): structure summarizing key
+        parameters for the model run
 
 
 %% General Use Notes
@@ -38,17 +52,35 @@ file, and a summary file
 %}
 
 %% Input
+% Directory for Output
+    out_dir = '../Validation-Data/D3-Funwave-Data';
 % Trial number from Dune3 Dataset
-    trial_no = 5; 
+    trial_no = 24; 
 % Name that will form the beginning of the input.txt and bathy files
-    name = 'D3_AS2';
+    run_name = 'D36';
+spatio = struct();
+for j = 5:24
+    spatio = FW_Inputs_D3_f(out_dir,j,run_name,spatio);
+    disp(['Working on Trial ', num2str(j)])
+end
 
+save([fullfile(out_dir,run_name),'/',run_name,'-spatio.mat'],"spatio");
+
+function  spatio = FW_Inputs_D3_f(out_dir,trial_no,run_name,spatio)
 %% File/Directories
-    % Create Output directory for files generated
-        mkdir(name)
-    % Create file name base for specific files generated
+    % Add Trial Folder for constants
+        trial_name = ['Tr',sprintf('%02d', trial_no)];
         tri = ['Trial',sprintf('%02d', trial_no)];
-        file_name = [name,'_',tri];
+        name = fullfile(out_dir,run_name, trial_name);
+    % Add bathymetry and input folders
+        bathy_folder = fullfile(out_dir,run_name,[run_name,'-b']);
+        input_folder = fullfile(out_dir,run_name,[run_name,'-i']);
+    % Create Output directory for files generated
+        if ~exist(name, 'dir'), mkdir(name), end
+        if ~exist(bathy_folder, 'dir'), mkdir(bathy_folder), end
+        if ~exist(input_folder, 'dir'), mkdir(input_folder), end
+    % Create file name base for specific files generated
+        file_name = [run_name,'_',trial_name];
 
 %% Import D3c
 D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
@@ -68,6 +100,13 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
     % Pull out cross-shore and vertical coordinates
         X = D3c.(tri).Xb_cut; 
         Z = D3c.(tri).Yb_cut; 
+
+    % Remove repeated points
+        [X_sort,idx] = sort(X); 
+        Z_sort = Z(idx);
+        [X, idx_u] = unique(X_sort, 'stable' );
+        Z = Z_sort(idx_u);
+
     % Convert profile to depth by using the maximum MWL as origin
         depth = max(D3c.(tri).MWL); s.depth = depth;
         h = depth - Z; 
@@ -84,7 +123,7 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
         DX_min = h_max/15; s.DX_min = DX_min;% water depth requirement
         DX_max = L/60; s.DX_max = DX_max;% at least 60 points per wavelength
     % Save stability structure
-        save(['./',name,'./',file_name,'_s.mat'],'s')
+        save(fullfile(name,[file_name,'_stab.mat']),'s')
 
         
 %%% Choose a reasonable DX value, here just the average of min and max
@@ -102,15 +141,23 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
     % Interpolate the depth linearly along X_FW from data, round
         h_int = interp1(X,h,X_FW,"linear");
         h_FW = round(h_int,3);
-
+%%% Specify time
+    time_tot = 1450;
 %%% Get Mglob and specify Nglob
     Mglob = length(X_FW);
     Nglob = 4;
+    spatio.(tri).Mglob = Mglob;
+    spatio.(tri).Nglob = Nglob;
+    spatio.(tri).time_tot = time_tot;
 
-%%% Deal with Wavemaker specification
+%%% Deal with Wavemaker and Sponge specification
     %%% Xc_WK and DEP_WK Processing
         % Specify X position of Wavemaker (1/5 into the model domain)
-            M_WK = 0.2*Mglob;
+            M_WK = round(0.2*Mglob);
+
+        % Specify the X position of the Sponge Layer (0.6*L)
+            Sponge_West_M = round(0.6*L);
+            Sponge_West = X_FW(Sponge_West_M);
         % Find Xc_WK
             Xc_WK = X_FW(round(0.2*Mglob));
         % Find DEP_WK
@@ -123,110 +170,107 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
 
 %% Create FUNWAVE bathy files
     %%% Write actual file that FUNWAVE needs
-        writematrix([h_FW; h_FW; h_FW; h_FW], fullfile('./', name,[file_name,'_b.txt']))
+        writematrix([h_FW; h_FW; h_FW; h_FW], fullfile(bathy_folder,[file_name,'_b.txt']));
     %%% Save the X-Values that go along with each point too
         writematrix(X_FW, fullfile('./', name,[file_name,'_x.txt']));
         
 
-%% Plot for Sanity
-%%% Data as Given
-    %%% Pull out variables
-        Xb_cut = D3c.(tri).Xb_cut; Xa_cut = D3c.(tri).Xa_cut;
-        Yb_cut = D3c.(tri).Yb_cut; Ya_cut = D3c.(tri).Ya_cut;
-        WG_cut = D3c.(tri).WG_cut; WG_s = D3c.(tri).WG_s;
-        MWL = D3c.(tri).MWL;
-    %%% Plot call
-        close all
-        figure(1)
-        subplot(2,2,1)
-        hold on
-            % Plot before profile
-            plot(Xb_cut, Yb_cut, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-');
-            % Plot after profile
-            plot(Xa_cut, Ya_cut, 'LineWidth', 1.5, 'Color', 'r', 'LineStyle', '-');
-            % Plot Wave gage locations
-            plot([WG_cut; WG_cut], repmat(ylim', 1, size(WG_cut, 2)), 'Color', [0 0 0, 0.5], 'LineStyle', '--', 'LineWidth', 0.75);
-            % Plot MWL
-            plot(WG_s,MWL,'Color',"#4DBEEE",'LineWidth',2);
-            % Plot Labels/Properties
-            title('Data Cut Off');
-            grid on
-
-%%% Interpolated Profile
-    subplot(2,2,2)
-    hold on
-        % Plot interpolated points
+%% Generate Plot
+close all
+f = figure('visible','off');
+hold on
+    % Plot interpolated points
         plot(X_FW,depth - h_FW, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-')
-        
-        % Plot Labels/Properties
-        title('Interpolated Profile: Cut Off');
-        grid on
-%%% FUNWAVE Depth_Flat Profile
-    figure(2)
-    hold on
-        % Plot interpolated points
-        plot(X_FW,depth - h_FW, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-')
-        
-        % Plot Sponge Layer and WaveMaker
-        %xline(X_sponge, 'LineWidth', 1.5, 'Color', 'g', 'LineStyle', '--')
+    
+    % Plot Sponge Layer and WaveMaker
+        xline(Sponge_West, 'LineWidth', 1.5, 'Color', 'g', 'LineStyle', '--')
         xline(Xc_WK, 'LineWidth', 1.5, 'Color', 'r', 'LineStyle', '--');
-
-        % Plot MWL
+    
+    % Plot MWL
         yline(depth,'Color',"#4DBEEE",'LineWidth',2 )
-        % Plot Labels/Properties
-        title('Input Profile');
+    % Plot Labels/Properties
+        title(['Funwave Dune 3 Input for: ', file_name], 'Interpreter', 'none');
+
         grid on
-        legend(['Profile:', ' DX = 0.1459,   DY = 1,   Mglob = 1204,   Nglob = 3'] ,['Sponge: ', 'Width (West) = 26.1074'], ['WaveMaker: ', 'XcWK = 36.3170', ',   DEPWK = 2.16'], 'Depth Datum @ 2.16', 'Location','southoutside')
+        legend(['Profile:', ...
+                    ' DX = ',num2str(DX), ' DY = ',num2str(DY),...
+                    ' Mglob = ',num2str(Mglob),   ' Nglob = ',num2str(Nglob)...
+                    ],...
+                ['Sponge: ',...
+                    'Width (West) = ' num2str(Sponge_West)...
+                    ],...
+                ['WaveMaker: ',...
+                    'XcWK = ', num2str(Xc_WK),' DEPWK = ', num2str(DEP_WK)...
+                    ],...
+                ['Depth @ Datum: ', num2str(h_max)],...
+                'Location','southoutside')
+    % Save plot
+        saveas(gcf,fullfile('./', name,[file_name,'_plot.png']))
 
 
 %% Create input.txt file
 %%% Create file using FW_Write class
     addpath('../Key-Scripts/')
-    f = FW_write(fullfile('./', name,[file_name,'_i.txt']));
+    f = FW_write(fullfile(input_folder,[file_name,'_i.txt']));
 %%% Populate File
     f.TITLE(); 
         f.set('TITLE',file_name)
     f.PARALLEL_INFO(); 
         f.set('PX',16); f.set('PY',2)
     f.DEPTH(); 
-        f.set('DEPTH_TYPE','DATA'); f.set('DEPTH_FILE', ['./bathy/', file_name,'_b.txt'])
+        f.set('DEPTH_TYPE','DATA'); 
+        f.set('DEPTH_FILE', ['./bathy/', run_name,'-b/', file_name,'_b.txt'])
     f.DIMENSION();
-        f.set('Mglob', Mglob); f.set('Nglob',Nglob)
+        f.set('Mglob', Mglob); 
+        f.set('Nglob',Nglob)
     f.TIME()
-        f.set('TOTAL_TIME','1450.0');f.set('PLOT_INTX','1.0');
-        f.set('PLOT_INTV_STATION', '0.5'); f.set('SCREEN_INTV', '1.0');
+        f.setf('TOTAL_TIME',time_tot);f.setf('PLOT_INTX',1);
+        f.setf('PLOT_INTV_STATION', 0.5); f.setf('SCREEN_INTV', 1);
     f.GRID()
-        f.set('DX',DX); f.set('DY',DY)
+        f.setf('DX',DX); 
+        f.setf('DY',DY)
     f.WAVEMAKER()
         f.set('WAVEMAKER','WK_REG')
-        f.set('DEP_WK',DEP_WK); f.set('Xc_WK',Xc_WK); 
-        f.set('AMP_WK',AMP_WK); f.set('Tperiod',T);
-        f.set('Theta_WK','0.0');f.set('Delta_WK','3.0');
+        f.setf('DEP_WK',DEP_WK); 
+        f.setf('Xc_WK',Xc_WK); 
+        f.setf('AMP_WK',AMP_WK); 
+        f.setf('Tperiod',T);
+        f.setf('Theta_WK',0);
+        f.setf('Delta_WK',3);
     f.PERIODIC_BC()
         f.set('PERIODIC', 'F');
     f.PHYSICS()
-        f.set('Cd', '0.0');
+        f.setf('Cd', 0);
     f.SPONGE_LAYER()
-        f.set('DIFFUSION_SPONGE', 'F'); f.set('FRICTION_SPONGE', 'T');
-        f.set('DIRECT_SPONGE', 'T'); f.set('Csp', '0.0');
-        f.set('CDsponge', '1.0');
-        f.set('Sponge_west_width', '3.0'); f.set('Sponge_east_width', '0.0');
-        f.set('Sponge_south_width', '0.0'); f.set('Sponge_north_width', '0.0');
+        f.set('DIFFUSION_SPONGE', 'F'); 
+        f.set('FRICTION_SPONGE', 'T');
+        f.set('DIRECT_SPONGE', 'T'); 
+        f.set('Csp', '0.0');
+        f.setf('CDsponge', 1.0);
+        f.setf('Sponge_west_width', Sponge_West); 
+        f.setf('Sponge_east_width', 0);
+        f.setf('Sponge_south_width', 0); 
+        f.setf('Sponge_north_width', 0);
     f.NUMERICS()
-        f.set('CFL', '0.4'); f.set('FroudeCap', '3.0');  
+        f.setf('CFL', 0.4); 
+        f.setf('FroudeCap', 3);  
     f.WET_DRY()
-        f.set('MinDepth', '0.01');
+        f.setf('MinDepth', 0.01);
     f.BREAKING()
-        f.set('VISCOSITY_BREAKING', 'T'); f.set('Cbrk1', '0.65'); f.set('Cbrk2', '0.35');
+        f.set('VISCOSITY_BREAKING', 'T'); 
+        f.setf('Cbrk1', 0.65); f.setf('Cbrk2', 0.35);
     f.WAVE_AVERAGE()
-        f.set('T_INTV_mean', '10.0'); f.set('STEADY_TIME', '10.0');
+        f.setf('T_INTV_mean', 10); 
+        f.setf('STEADY_TIME', 10);
     f.OUTPUT()
-        f.set('DEPTH_OUT','T'); f.set('WaveHeight','T'); 
-        f.set('ETA','T'); f.set('MASK','F');
-        f.set('RESULT_FOLDER', ['./outputs/',name,'_',tri, '/'])
+        f.set('DEPTH_OUT','T'); 
+        f.set('WaveHeight','F'); 
+        f.set('ETA','T'); 
+        f.set('MASK','F');
+        f.set('FIELD_IO_TYPE','BINARY');
+        f.set('RESULT_FOLDER', ['/lustre/scratch/rschanta/',run_name,'/',trial_name, '/']);
 %% Save FW Input structure
     FW_vars = f.FW_vars;
-    save(['./',name,'./',file_name,'_i.mat'],'FW_vars')
-
-        
+    save(fullfile('./', name,[file_name,'_s.mat']),'FW_vars')
+end
 
