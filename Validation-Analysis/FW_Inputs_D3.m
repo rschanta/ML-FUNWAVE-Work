@@ -60,7 +60,7 @@ file, and a summary file in the form of a structure.
 % Trial number from Dune3 Dataset
     trial_no = 24; 
 % Name that will form the beginning of the input.txt and bathy files
-    run_name = 'D38';
+    run_name = 'D39';
 spatio = struct();
 for j = 5:8
     spatio = FW_Inputs_D3_f(out_dir,j,run_name,spatio);
@@ -179,103 +179,109 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
         %writematrix(X_FW, fullfile('./', name,[file_name,'_x.txt']));
         spatio.X = X_FW;
 
-%% Generate Plot
-close all
-f = figure('visible','off');
-hold on
-    % Plot interpolated points
-        plot(X_FW,depth - h_FW, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-')
+%% Generate Plot   
+    plot_D3FW_domain()
+%% Create Input
+    create_D3FW_input()
     
-    % Plot Sponge Layer and WaveMaker
-        xline(Sponge_West, 'LineWidth', 1.5, 'Color', 'g', 'LineStyle', '--')
-        xline(Xc_WK, 'LineWidth', 1.5, 'Color', 'r', 'LineStyle', '--');
-    
-    % Plot MWL
-        yline(depth,'Color',"#4DBEEE",'LineWidth',2 )
-    % Plot Labels/Properties
-        title(['Funwave Dune 3 Input for: ', file_name], 'Interpreter', 'none');
-
-        grid on
-        legend(['Profile:', ...
-                    ' DX = ',num2str(DX), ' DY = ',num2str(DY),...
-                    ' Mglob = ',num2str(Mglob),   ' Nglob = ',num2str(Nglob)...
-                    ],...
-                ['Sponge: ',...
-                    'Width (West) = ' num2str(Sponge_West)...
-                    ],...
-                ['WaveMaker: ',...
-                    'XcWK = ', num2str(Xc_WK),' DEPWK = ', num2str(DEP_WK)...
-                    ],...
-                ['Depth @ Datum: ', num2str(h_max)],...
-                'Location','southoutside')
-    % Save plot
-        saveas(gcf,fullfile('./', name,[trial_name,'_plot.png']))
-
-
-%% Create input.txt file
-%%% Create file using FW_Write class
-    addpath('../Key-Scripts/')
-    f = FW_write(fullfile(input_folder,[file_name,'_i.txt']));
-%%% Populate File
-    f.TITLE(); 
-        f.set('TITLE',file_name)
-    f.PARALLEL_INFO(); 
-        f.set('PX',16); f.set('PY',2)
-    f.DEPTH(); 
-        f.set('DEPTH_TYPE','DATA'); 
-        f.set('DEPTH_FILE', ['./bathy/', run_name,'-b/', file_name,'_b.txt'])
-    f.DIMENSION();
-        f.set('Mglob', Mglob); 
-        f.set('Nglob',Nglob)
-    f.TIME()
-        f.setf('TOTAL_TIME',time_tot);f.setf('PLOT_INTX',1);
-        f.setf('PLOT_INTV_STATION', 0.5); f.setf('SCREEN_INTV', 1);
-    f.GRID()
-        f.setf('DX',DX); 
-        f.setf('DY',DY)
-    f.WAVEMAKER()
-        f.set('WAVEMAKER','WK_REG')
-        f.setf('DEP_WK',DEP_WK); 
-        f.setf('Xc_WK',Xc_WK); 
-        f.setf('AMP_WK',AMP_WK); 
-        f.setf('Tperiod',T);
-        f.setf('Theta_WK',0);
-        f.setf('Delta_WK',3);
-    f.PERIODIC_BC()
-        f.set('PERIODIC', 'F');
-    f.PHYSICS()
-        f.setf('Cd', 0);
-    f.SPONGE_LAYER()
-        f.set('DIFFUSION_SPONGE', 'F'); 
-        f.set('FRICTION_SPONGE', 'T');
-        f.set('DIRECT_SPONGE', 'T'); 
-        f.set('Csp', '0.0');
-        f.setf('CDsponge', 1.0);
-        f.setf('Sponge_west_width', Sponge_West); 
-        f.setf('Sponge_east_width', 0);
-        f.setf('Sponge_south_width', 0); 
-        f.setf('Sponge_north_width', 0);
-    f.NUMERICS()
-        f.setf('CFL', 0.4); 
-        f.setf('FroudeCap', 3);  
-    f.WET_DRY()
-        f.setf('MinDepth', 0.01);
-    f.BREAKING()
-        f.set('VISCOSITY_BREAKING', 'T'); 
-        f.setf('Cbrk1', 0.65); f.setf('Cbrk2', 0.35);
-    f.WAVE_AVERAGE()
-        f.setf('T_INTV_mean', 10); 
-        f.setf('STEADY_TIME', 10);
-    f.OUTPUT()
-        f.set('DEPTH_OUT','T'); 
-        f.set('WaveHeight','F'); 
-        f.set('ETA','T'); 
-        f.set('MASK','F');
-        f.set('FIELD_IO_TYPE','BINARY');
-        f.set('RESULT_FOLDER', ['/lustre/scratch/rschanta/',run_name,'/',trial_name, '/']);
-%% Save FW Input structure
-    FW_vars = f.FW_vars;
-    %save(fullfile('./', name,[file_name,'_FW_in.mat']),'FW_vars')
-    spatio.FW_in.mat = FW_vars;
+%% INPUT Function
+function create_D3FW_input()
+    %%% Create file using FW_Write class
+        addpath('../Key-Scripts/')
+        f = FW_write(fullfile(input_folder,[file_name,'_i.txt']));
+    %%% Populate File
+        f.TITLE(); 
+            f.set('TITLE',file_name)
+        f.PARALLEL_INFO(); 
+            f.set('PX',16); f.set('PY',2)
+        f.DEPTH(); 
+            f.set('DEPTH_TYPE','DATA'); 
+            f.set('DEPTH_FILE', ['./bathy/', run_name,'-b/', file_name,'_b.txt'])
+        f.DIMENSION();
+            f.set('Mglob', Mglob); 
+            f.set('Nglob',Nglob)
+        f.TIME()
+            f.setf('TOTAL_TIME',time_tot);f.setf('PLOT_INTX',1);
+            f.setf('PLOT_INTV_STATION', 0.5); f.setf('SCREEN_INTV', 1);
+        f.GRID()
+            f.setf('DX',DX); 
+            f.setf('DY',DY)
+        f.WAVEMAKER()
+            f.set('WAVEMAKER','WK_REG')
+            f.setf('DEP_WK',DEP_WK); 
+            f.setf('Xc_WK',Xc_WK); 
+            f.setf('AMP_WK',AMP_WK); 
+            f.setf('Tperiod',T);
+            f.setf('Theta_WK',0);
+            f.setf('Delta_WK',3);
+        f.PERIODIC_BC()
+            f.set('PERIODIC', 'F');
+        f.PHYSICS()
+            f.setf('Cd', 0);
+        f.SPONGE_LAYER()
+            f.set('DIFFUSION_SPONGE', 'F'); 
+            f.set('FRICTION_SPONGE', 'T');
+            f.set('DIRECT_SPONGE', 'T'); 
+            f.set('Csp', '0.0');
+            f.setf('CDsponge', 1.0);
+            f.setf('Sponge_west_width', Sponge_West); 
+            f.setf('Sponge_east_width', 0);
+            f.setf('Sponge_south_width', 0); 
+            f.setf('Sponge_north_width', 0);
+        f.NUMERICS()
+            f.setf('CFL', 0.4); 
+            f.setf('FroudeCap', 3);  
+        f.WET_DRY()
+            f.setf('MinDepth', 0.01);
+        f.BREAKING()
+            f.set('VISCOSITY_BREAKING', 'T'); 
+            f.setf('Cbrk1', 0.65); f.setf('Cbrk2', 0.35);
+        f.WAVE_AVERAGE()
+            f.setf('T_INTV_mean', 10); 
+            f.setf('STEADY_TIME', 10);
+        f.OUTPUT()
+            f.set('DEPTH_OUT','T'); 
+            f.set('WaveHeight','F'); 
+            f.set('ETA','T'); 
+            f.set('MASK','F');
+            f.set('FIELD_IO_TYPE','BINARY');
+            f.set('RESULT_FOLDER', ['/lustre/scratch/rschanta/',run_name,'/',trial_name, '/']);
+    %% Save FW Input structure
+        FW_vars = f.FW_vars;
+        spatio.FW_in.mat = FW_vars;
 end
 
+%% Plotting Function
+function plot_D3FW_domain()
+    close all
+    f = figure('visible','off');
+    hold on
+        % Plot interpolated points
+            plot(X_FW,depth - h_FW, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-')
+        
+        % Plot Sponge Layer and WaveMaker
+            xline(Sponge_West, 'LineWidth', 1.5, 'Color', 'g', 'LineStyle', '--')
+            xline(Xc_WK, 'LineWidth', 1.5, 'Color', 'r', 'LineStyle', '--');
+        
+        % Plot MWL
+            yline(depth,'Color',"#4DBEEE",'LineWidth',2 )
+        % Plot Labels/Properties
+            title(['Funwave Dune 3 Input for: ', file_name], 'Interpreter', 'none');
+    
+            grid on
+            legend(['Profile:', ...
+                        ' DX = ',num2str(DX), ' DY = ',num2str(DY),...
+                        ' Mglob = ',num2str(Mglob),   ' Nglob = ',num2str(Nglob)...
+                        ],...
+                    ['Sponge: ',...
+                        'Width (West) = ' num2str(Sponge_West)...
+                        ],...
+                    ['WaveMaker: ',...
+                        'XcWK = ', num2str(Xc_WK),' DEPWK = ', num2str(DEP_WK)...
+                        ],...
+                    ['Depth @ Datum: ', num2str(h_max)],...
+                    'Location','southoutside')
+        % Save plot
+            saveas(gcf,fullfile('./', name,[trial_name,'_plot.png']))
+end
+end
