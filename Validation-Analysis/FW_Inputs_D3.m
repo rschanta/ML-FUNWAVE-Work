@@ -60,15 +60,17 @@ file, and a summary file in the form of a structure.
 % Trial number from Dune3 Dataset
     trial_no = 24; 
 % Name that will form the beginning of the input.txt and bathy files
-    run_name = 'D39';
+    run_name = 'D40';
 spatio = struct();
 for j = 5:8
     spatio = FW_Inputs_D3_f(out_dir,j,run_name,spatio);
     disp(['Working on Trial ', num2str(j)])
 end
 
-save([fullfile(out_dir,run_name),'/',run_name,'-spatio.mat'],"spatio");
+save([fullfile(out_dir,run_name),'/',run_name,'-data.mat'],"spatio");
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function  spatio = FW_Inputs_D3_f(out_dir,trial_no,run_name,spatio)
 %% File/Directories
     % Add Trial Folder for constants
@@ -78,10 +80,12 @@ function  spatio = FW_Inputs_D3_f(out_dir,trial_no,run_name,spatio)
     % Add bathymetry and input folders
         bathy_folder = fullfile(out_dir,run_name,[run_name,'-b']);
         input_folder = fullfile(out_dir,run_name,[run_name,'-i']);
+        plots_folder = fullfile(out_dir,run_name,[run_name,'-plots']);
     % Create Output directory for files generated
         if ~exist(name, 'dir'), mkdir(name), end
         if ~exist(bathy_folder, 'dir'), mkdir(bathy_folder), end
         if ~exist(input_folder, 'dir'), mkdir(input_folder), end
+        if ~exist(plots_folder, 'dir'), mkdir(plots_folder), end
     % Create file name base for specific files generated
         file_name = [run_name,'_',trial_name];
 
@@ -126,8 +130,7 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
         DX_min = h_max/15; s.DX_min = DX_min;% water depth requirement
         DX_max = L/60; s.DX_max = DX_max;% at least 60 points per wavelength
     % Save stability structure to larger structure
-        spatio.stability = s;
-        %save(fullfile(name,[file_name,'_stab.mat']),'s')
+        spatio.(tri).stability = s;
 
         
 %%% Choose a reasonable DX value, here just the average of min and max
@@ -175,15 +178,14 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
 %% Create FUNWAVE bathy files
     %%% Write actual file that FUNWAVE needs
         writematrix([h_FW; h_FW; h_FW; h_FW], fullfile(bathy_folder,[file_name,'_b.txt']));
-    %%% Save the X-Values that go along with each point too
-        %writematrix(X_FW, fullfile('./', name,[file_name,'_x.txt']));
-        spatio.X = X_FW;
+    %%% Save the X-Values of the interpolated profile to spatio
+        spatio.(tri).X = X_FW;
 
-%% Generate Plot   
+%%% Generate Plot   
     plot_D3FW_domain()
-%% Create Input
+%%% Create Input
     create_D3FW_input()
-    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 %% INPUT Function
 function create_D3FW_input()
     %%% Create file using FW_Write class
@@ -248,40 +250,43 @@ function create_D3FW_input()
             f.set('RESULT_FOLDER', ['/lustre/scratch/rschanta/',run_name,'/',trial_name, '/']);
     %% Save FW Input structure
         FW_vars = f.FW_vars;
-        spatio.FW_in.mat = FW_vars;
+        spatio.(tri).FW_in.mat = FW_vars;
 end
 
 %% Plotting Function
 function plot_D3FW_domain()
-    close all
-    f = figure('visible','off');
-    hold on
-        % Plot interpolated points
-            plot(X_FW,depth - h_FW, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-')
-        
-        % Plot Sponge Layer and WaveMaker
-            xline(Sponge_West, 'LineWidth', 1.5, 'Color', 'g', 'LineStyle', '--')
-            xline(Xc_WK, 'LineWidth', 1.5, 'Color', 'r', 'LineStyle', '--');
-        
-        % Plot MWL
-            yline(depth,'Color',"#4DBEEE",'LineWidth',2 )
-        % Plot Labels/Properties
-            title(['Funwave Dune 3 Input for: ', file_name], 'Interpreter', 'none');
+    %%% Set up Figure
+        close all
+        f = figure('visible','off');
+        hold on
+
+    %%% Plot Interpolated Points
+        plot(X_FW,depth - h_FW, 'LineWidth', 1.5, 'Color', 'b', 'LineStyle', '-')
     
-            grid on
-            legend(['Profile:', ...
-                        ' DX = ',num2str(DX), ' DY = ',num2str(DY),...
-                        ' Mglob = ',num2str(Mglob),   ' Nglob = ',num2str(Nglob)...
-                        ],...
-                    ['Sponge: ',...
-                        'Width (West) = ' num2str(Sponge_West)...
-                        ],...
-                    ['WaveMaker: ',...
-                        'XcWK = ', num2str(Xc_WK),' DEPWK = ', num2str(DEP_WK)...
-                        ],...
-                    ['Depth @ Datum: ', num2str(h_max)],...
-                    'Location','southoutside')
-        % Save plot
-            saveas(gcf,fullfile('./', name,[trial_name,'_plot.png']))
+    %%% Plot Sponge and Wavemaker
+        xline(Sponge_West, 'LineWidth', 1.5, 'Color', 'g', 'LineStyle', '--')
+        xline(Xc_WK, 'LineWidth', 1.5, 'Color', 'r', 'LineStyle', '--');
+    
+    %%% Plot MWL
+        yline(depth,'Color',"#4DBEEE",'LineWidth',2 )
+
+    %%% Set Plot properties and labels
+        title(['Funwave Dune 3 Input for: ', file_name], 'Interpreter', 'none');
+
+        grid on
+        legend(['Profile:', ...
+                    ' DX = ',num2str(DX), ' DY = ',num2str(DY),...
+                    ' Mglob = ',num2str(Mglob),   ' Nglob = ',num2str(Nglob)...
+                    ],...
+                ['Sponge: ',...
+                    'Width (West) = ' num2str(Sponge_West)...
+                    ],...
+                ['WaveMaker: ',...
+                    'XcWK = ', num2str(Xc_WK),' DEPWK = ', num2str(DEP_WK)...
+                    ],...
+                ['Depth @ Datum: ', num2str(h_max)],...
+                'Location','southoutside')
+    %%% Save plot
+        saveas(gcf,fullfile(plots_folder,[trial_name,'_plot.png']))
 end
 end

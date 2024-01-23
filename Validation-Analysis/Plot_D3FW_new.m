@@ -59,6 +59,9 @@ D3FW = D3FW.out_struct;
 close all
 animate_D3FW(D3c,D3FW,5,'D36')
 
+%%
+foo = load('../Validation-Data/D3-Funwave-Data/D40/D40-data.mat')
+
 %% Animate Dune3 version simulated output
 
 function animate_D3FW(D3c,D3FW, trial_no,name)
