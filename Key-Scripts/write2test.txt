@@ -1,1 +1,0 @@
-TITLE = input_00000.txt

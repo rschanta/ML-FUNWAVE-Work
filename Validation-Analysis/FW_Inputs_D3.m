@@ -60,7 +60,7 @@ file, and a summary file in the form of a structure.
 % Trial number from Dune3 Dataset
     trial_no = 24; 
 % Name that will form the beginning of the input.txt and bathy files
-    run_name = 'D40';
+    run_name = 'D60';
 spatio = struct();
 for j = 5:8
     spatio = FW_Inputs_D3_f(out_dir,j,run_name,spatio);

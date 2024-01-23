@@ -1,6 +1,6 @@
 function FW_input(FW,path)
     %%% Add path to Input Comments
-    addpath('../Helper-Functions/FW-Input-Comments/')
+    %addpath('../Helper-Functions/FW-Input-Comments/')
     
     %%% Create file
     fid = fopen(path, 'w');
