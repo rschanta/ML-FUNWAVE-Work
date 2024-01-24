@@ -2,9 +2,8 @@
 
 %% Load in Template File, Required Helper Functions, and D3c
 addpath('../Helper-Functions/FW-Input/')
-load('./Template/Template.mat');
 D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
-
+Template = load('./Template/Template5.mat');
 %% Prepare Inputs/Outputs
 
     %%% Trial Numner
@@ -17,6 +16,7 @@ D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
 %% Run Through Trials
 Summary = struct();
 for trial = 5:24
+    FW = Template.FW_base;
     [s, FW, d] = D3_to_FW(trial,D3c,FW,Out_Dir,Run_Name);
    
     plot_setup(trial,Run_Name,d, s, FW)
@@ -29,13 +29,13 @@ for trial = 5:24
             Summary.(Tr_Name).k = s.k;
             Summary.(Tr_Name).L = s.L;
             Summary.(Tr_Name).h0 = s.h0;
-            Summary.(Tr_Name).kh = s.kh;
-        % Save it
-            Run_Sum_path = fullfile(Out_Dir,Run_Name,'summary.mat');
-            save(Run_Sum_path,"Summary")
+            Summary.(Tr_Name).kh = s.kh;    
 end
-
-
+ % Save it
+            Run_Sum_path = fullfile(Out_Dir,Run_Name,[Run_Name,'summary.mat']);
+            save(Run_Sum_path,"Summary")
+%% Load to be summary
+load('../Validation-Data/D3-Funwave-Data/D99/D99summary.mat')
 
 %% Function to take Dune 3 Data to Funwave 
 function [s, FW, d] = D3_to_FW(Trial_no,D3c,FW,Out_Dir,Run_Name)
@@ -161,8 +161,8 @@ function s = set_sponge(D3c,Trial_No,s)
     %%% Construct Trial_Name
         Trial_Name = ['Trial',sprintf('%02d',Trial_No)]; 
     %%% Set sponge at 60% of wavelength (should at least 50%)
-        L = s.L;
-        Sponge_west_width = 0.25*L;
+        L = s.L; X_FW = s.X_FW;
+        Sponge_west_width = X_FW(round(0.6*L));
     %%% Store to output
         s.Sponge_west_width = Sponge_west_width;
 end
@@ -211,13 +211,15 @@ function [s, FW] = modify_FWD3_Template(Trial_no,Run_Name,s,FW)
         FW.TITLE = title_name;
     %%% Set Depth Info
         bathy_file_name = s.bathy_file_name;
-        bathy_path = ['./bathy/',bathy_file_name];
-        FW.Depth_FILE = bathy_path;
+        bathy_path = ['./bathy/',Run_Name,'-b/',bathy_file_name];
+        FW.DEPTH_FILE = bathy_path;
     %%% Set Dimension (note- needs to be an int!)
         FW.Mglob = int64(s.Mglob);
         FW.Nglob = int8(4); % Set to 4
     %%% Set total time
         FW.TOTAL_TIME = 1450; % Set to 1450 to match Dune3 Dataset
+        FW.T_INTV_mean = 10.0;
+        FW.STEADY_TIME = 10.0;
     %%% Grid
         FW.DX = s.DX;
         FW.DY = s.DX; % Use same DY as DX
