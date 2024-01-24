@@ -6,8 +6,8 @@ FW_base = struct();
 FW.hTITLE = true;
     FW.TITLE = 'input_00000.txt';
 FW.hPARALLEL_INFO = true; 
-    FW.PX = int8(16); 
-    FW.PY = int8(2);
+    FW.PX = int64(16); 
+    FW.PY = int64(2);
 FW.hDEPTH= true; 
     FW.DEPTH_TYPE = 'DATA'; 
     FW.DEPTH_FILE = 'DEPTH_FILE';
@@ -62,6 +62,7 @@ FW.hOUTPUT= true;
     FW.ETA = 'T'; 
     FW.MASK = 'F'; 
     FW.FIELD_IO_TYPE = 'BINARY';
+    FW.RESULT_FOLDER = 'RESULT_FOLDER'
 %% Save
-    save('./FWD3_Template','FW')
+    save('./Template.mat','FW')
 

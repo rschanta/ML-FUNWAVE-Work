@@ -17,7 +17,7 @@ function FW_input(FW,path)
 
         %%% Cases: Double, Int, String, or Header (Logical) Text
             % Case 1: Is an integer (ie- params that must be an int)
-            if isa(value, 'int8')
+            if isa(value, 'int64') || isa(value, 'int8')
                 line = strcat(param, " = ",string(value),"\n");
                 fprintf(fid,line);
            
