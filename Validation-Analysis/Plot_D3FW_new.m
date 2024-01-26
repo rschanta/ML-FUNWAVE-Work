@@ -41,9 +41,9 @@ Dune 3 dataset.
 trial_no = 5; 
 %% Import D3c and D3FW
 D3c = load('../Validation-Data/DUNE3_data/D3c.mat');
-D3FW = load('../Analysis-Playground/D36_out.mat');
+D3FW = load('../Analysis-Playground/D101_Tr05_out.mat');
 D3FW = D3FW.out_struct;
-
+load("../Validation-Data\D3-Funwave-Data\D101\D101summary.mat")
 %%
 % D3_info = load('../Validation-Data/D3-Funwave-Data/D36/Tr05/D36_Tr05_s.mat')
 % 0:DX:DX*(Mglob-1)
@@ -56,35 +56,36 @@ D3FW = D3FW.out_struct;
 
 
 %% 
-close all
-animate_D3FW(D3c,D3FW,5,'D36')
+%close all
+animate_D3FW(D3c,D3FW,5,Summary)
 
 %%
-foo = load('../Validation-Data/D3-Funwave-Data/D40/D40-data.mat')
-
+% foo = load('../Validation-Data/D3-Funwave-Data/D40/D40-data.mat')
+% double(Summary.Tr05.Mglob)
 %% Animate Dune3 version simulated output
 
-function animate_D3FW(D3c,D3FW, trial_no,name)
+function animate_D3FW(D3c,D3FW, trial_no,Summary)
 
     %%% Construct Trial Names for structure fields
         tric = ['Trial',sprintf('%02d', trial_no)];
         trif = ['Tr',sprintf('%02d', trial_no)];
     %%% Pull out data from structures
-        D3_D = DownsampleD3(D3c,trial_no,1450)
+        D3_D = DownsampleD3(D3c,trial_no,1450);
         D3_FW = D3FW.(trif);
 
     %%% Get spatial info
-        str_name = fullfile('../Validation-Data/D3-Funwave-Data/',name,trif,[name,'_',trif,'_s.mat'])
-        Dspat = load(str_name);
-        D3_FWX = 0:Dspat.DX:Dspat.DX*(Dspat.Mglob-1);
+        DX = Summary.(trif).DX;
+        Mglob = double(Summary.(trif).Mglob);
+        D3_FWX = 0:DX:DX*(Mglob-1);
 
-
+    df = D3c.(tric);
     %%% Get number of wave gauges in the submerged profile
     len_WG = length(df.WG_cut);
 
     %%% Construct the figure
     f = figure(1);
         % Initialize plots and title
+            hold on
             %%% Actual Data
                 D = plot(D3_D.WG,D3_D.eta(1,:)); 
             %%% Funwave simulation
@@ -100,7 +101,7 @@ function animate_D3FW(D3c,D3FW, trial_no,name)
 
         iter = 1;
         % Loop through the times to animate (skip every other for speed
-        for t = t_0:2:t_end
+        for t = D3_D.t:2:1450
 
             %%% Plot bathymetry offset by offshore MWL
             if iter == 1

@@ -15,7 +15,7 @@ Template = load('./Template/Template5.mat');
 
 %% Run Through Trials
 Summary = struct();
-for trial = 5:24
+for trial = [5:19,21:24]
     FW = Template.FW_base;
     [s, FW, d] = D3_to_FW(trial,D3c,FW,Out_Dir,Run_Name);
    
@@ -121,28 +121,59 @@ function s = prepare_input_profile(D3c, Trial_no, s)
     %%% Get width of the submerged profile
         X = s.X; 
         X_width = max(X); 
+    %%% Adjust such that the first wave gauge is 1.1*wavelength from left
+        % Amount to add
+            X_add = 1.1*s.L - D3c.(Trial_Name).WG_s(1);
+        % Add to width and profile
+            X_width = X_width + X_add;
+            X = X + X_add;
     %%% Construct new cross-shore coordinate based on DX and profile width
         DX = s.DX;
         X_FW = 0:DX:X_width;
+    %%% Adjust profile as needed to add zeros
+        % Find index of original origin in the new construction
+            [~, orig_i] = min(abs(X_FW - X_add));
+        % Find how many points were before this
+            no_zeros_add = orig_i - 1;
+        % Add onto profiles
+            add_X = linspace(0,0.9*X_add,no_zeros_add);
+            
+            X = [add_X X];
+            h = s.h;
+            add_Y = s.h(1)*ones(1,no_zeros_add);
+            h = [add_Y h];
+
     %%% Get Mglob from length of X_FW
         Mglob = length(X_FW);
+    %%% Add padding zeros to height based on differences in length
+        % disp('length of h is: ')
+        % disp(length(h))
+        %  disp('---')
+        %  disp('length of X is: ')
+        %  disp(length(X))
+        %  disp('---')
+        %unique_elements = unique(X);
+        %disp(X)
+% Find non-unique elements
+    non_unique_elements = X(histc(X, unique(X)) > 1);
+    disp(non_unique_elements)
     %%% Interpolate the depth linearly along X_FW from the data 
-        h = s.h;
         h_FW = interp1(X,h,X_FW,"linear");
-        
         h_FW = round(h_FW,3); % round for nicer number
     %%% Store to output
         s.X_FW = X_FW;
         s.h_FW = h_FW;
         s.Mglob = Mglob;
+        s.X_add = X_add;
 end
 
 function s = set_wavemaker(D3c,Trial_no,s)
     %%% Construct Trial_Name
         Trial_Name = ['Trial',sprintf('%02d',Trial_no)]; 
-    %%% Specify X position of wavemaker (1.1 Wavelength into the domain)
+    %%% Specify X position of wavemaker (at left most gage point)
         X_FW = s.X_FW;
         L = s.L;
+
         Xc_WK = 1.1*L;
         [~, M_WK] = min(abs(Xc_WK - X_FW));
         Xc_WK =  X_FW(M_WK);
@@ -162,7 +193,7 @@ function s = set_sponge(D3c,Trial_No,s)
     %%% Construct Trial_Name
         Trial_Name = ['Trial',sprintf('%02d',Trial_No)]; 
     %%% Set sponge at 60% of wavelength (should at least 50%)
-        L = s.L; X_FW = s.X_FW;
+        L = s.L; 
         Sponge_west_width = 0.52*L;
     %%% Store to output
         s.Sponge_west_width = Sponge_west_width;
@@ -279,7 +310,7 @@ function plot_setup(Trial_no,Run_Name,d, s, FW)
                 ['Sponge: ',...
                     'Width (West) = ' num2str(s.Sponge_west_width)...
                     ],...
-                ['Depth @ Datum: ', num2str(s.h0)],...
+                ['Depth @ Datum: ', num2str(s.h0), 'Wavelength: ', num2str(s.L)],...
                 'Location','southoutside')
     %%% Save plot
         saveas(gcf,fullfile(d.Plot_Dir,[PlotName,'_plot.png']))
